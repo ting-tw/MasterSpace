@@ -23,8 +23,25 @@ namespace Invector.vCharacterController
 
         #endregion
 
+        [SerializeField]
+        private FixedJoystick _joystick;
+        public GameObject SprintBtn;
+        public GameObject JumpBtn;
+        public GameObject StrafeBtn;
+        private RawImageClickHandler sprintClickHandler;
+        private RawImageClickHandler jumpClickHandler;
+        private RawImageClickHandler strafeClickHandler;
+
+        public float rotationSpeed; // 旋轉速度
+
+
+
         protected virtual void Start()
         {
+            sprintClickHandler = SprintBtn.GetComponent<RawImageClickHandler>();
+            jumpClickHandler = JumpBtn.GetComponent<RawImageClickHandler>();
+            strafeClickHandler = StrafeBtn.GetComponent<RawImageClickHandler>();
+
             InitilizeController();
             InitializeTpCamera();
         }
@@ -83,8 +100,8 @@ namespace Invector.vCharacterController
 
         public virtual void MoveInput()
         {
-            cc.input.x = Input.GetAxis(horizontalInput);
-            cc.input.z = Input.GetAxis(verticallInput);
+            cc.input.x = _joystick.Horizontal;
+            cc.input.z = _joystick.Vertical;
         }
 
         protected virtual void CameraInput()
@@ -107,23 +124,46 @@ namespace Invector.vCharacterController
             if (tpCamera == null)
                 return;
 
-            var Y = Input.GetAxis(rotateCameraYInput);
-            var X = Input.GetAxis(rotateCameraXInput);
+            // var Y = Input.GetAxis(rotateCameraYInput);
+            // var X = Input.GetAxis(rotateCameraXInput);
 
+float Y = 0;
+float X = 0;
+if (Input.touchCount > 0)
+        {
+            for (int i = 0; i < Input.touchCount; i++)
+            {
+                Touch touch = Input.GetTouch(i);
+                Vector2 touchPosition = touch.position;
+
+                // 檢查觸摸位置是否在螢幕右半邊
+                if (touchPosition.x > Screen.width / 2)
+                {
+                    // 根據觸摸事件類型執行不同的操作
+                    if (touch.phase == TouchPhase.Moved)
+                    {
+                        // 根據觸摸移動距離旋轉物體
+                        Y = touch.deltaPosition.y * rotationSpeed * Time.deltaTime;
+                        X = touch.deltaPosition.x * rotationSpeed * Time.deltaTime;
+                    }
+                }
+            }
+        }
             tpCamera.RotateCamera(X, Y);
         }
 
         protected virtual void StrafeInput()
         {
-            if (Input.GetKeyDown(strafeInput))
+            // if (Input.GetKeyDown(strafeInput))
+            if (strafeClickHandler.PressDown())
                 cc.Strafe();
         }
 
         protected virtual void SprintInput()
         {
-            if (Input.GetKeyDown(sprintInput))
+            if (sprintClickHandler.PressDown())
                 cc.Sprint(true);
-            else if (Input.GetKeyUp(sprintInput))
+            else if (sprintClickHandler.PressUp())
                 cc.Sprint(false);
         }
 
@@ -141,7 +181,8 @@ namespace Invector.vCharacterController
         /// </summary>
         protected virtual void JumpInput()
         {
-            if (Input.GetKeyDown(jumpInput) && JumpConditions())
+            // if (Input.GetKeyDown(jumpInput) && JumpConditions())
+            if (jumpClickHandler.PressDown() && JumpConditions())
                 cc.Jump();
         }
 

@@ -13,7 +13,7 @@ public class WebSocketManager : MonoBehaviour
     public int executionsPerSecond = 20;
     private float interval;
     private float timer;
-    private String address;
+    private string address;
 
     public GameObject player;
     public GameObject otherPlayerPrefab;
@@ -29,7 +29,7 @@ public class WebSocketManager : MonoBehaviour
         interval = 1f / executionsPerSecond;
         timer = 0f;
 
-        address = wss ? "wss" : "ws" + "://" + server_ip + ":" + port;
+        address = (wss ? "wss" : "ws") + "://" + server_ip + ":" + port;
 
         Debug.Log(address);
 
@@ -128,7 +128,8 @@ public class WebSocketManager : MonoBehaviour
 
     void OnError(object sender, ErrorEventArgs e)
     {
-        Debug.LogError("WebSocket error: " + e.Message);
+        Debug.LogError("WebSocket error: ");
+        Debug.LogError(e);
     }
 
     [System.Serializable]
