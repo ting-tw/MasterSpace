@@ -6,19 +6,27 @@ public class RawImageClickHandler : MonoBehaviour, IPointerDownHandler, IPointer
 {
     private bool pressdown = false;
     private bool pressup = false;
-    public bool PressDown() {
-        if (pressdown) {
+    public bool PressDown()
+    {
+        if (pressdown)
+        {
             pressdown = false;
             return true;
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
-    public bool PressUp() {
-        if (pressup) {
+    public bool PressUp()
+    {
+        if (pressup)
+        {
             pressup = false;
             return true;
-        } else {
+        }
+        else
+        {
             return false;
         }
     }
@@ -40,8 +48,8 @@ public class RawImageClickHandler : MonoBehaviour, IPointerDownHandler, IPointer
 
     public void OnPointerUp(PointerEventData eventData)
     {
-            pressdown = false;
-            pressup = true;
-        
+        pressdown = false;
+        pressup = true;
+
     }
 }

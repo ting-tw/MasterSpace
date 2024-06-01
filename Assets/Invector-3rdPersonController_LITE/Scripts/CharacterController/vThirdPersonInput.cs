@@ -127,28 +127,28 @@ namespace Invector.vCharacterController
             // var Y = Input.GetAxis(rotateCameraYInput);
             // var X = Input.GetAxis(rotateCameraXInput);
 
-float Y = 0;
-float X = 0;
-if (Input.touchCount > 0)
-        {
-            for (int i = 0; i < Input.touchCount; i++)
+            float Y = 0;
+            float X = 0;
+            if (Input.touchCount > 0)
             {
-                Touch touch = Input.GetTouch(i);
-                Vector2 touchPosition = touch.position;
-
-                // 檢查觸摸位置是否在螢幕右半邊
-                if (touchPosition.x > Screen.width / 2)
+                for (int i = 0; i < Input.touchCount; i++)
                 {
-                    // 根據觸摸事件類型執行不同的操作
-                    if (touch.phase == TouchPhase.Moved)
+                    Touch touch = Input.GetTouch(i);
+                    Vector2 touchPosition = touch.position;
+
+                    // 檢查觸摸位置是否在螢幕右半邊
+                    if (touchPosition.x > Screen.width / 2)
                     {
-                        // 根據觸摸移動距離旋轉物體
-                        Y = touch.deltaPosition.y * rotationSpeed * Time.deltaTime;
-                        X = touch.deltaPosition.x * rotationSpeed * Time.deltaTime;
+                        // 根據觸摸事件類型執行不同的操作
+                        if (touch.phase == TouchPhase.Moved)
+                        {
+                            // 根據觸摸移動距離旋轉物體
+                            Y = touch.deltaPosition.y * rotationSpeed * Time.deltaTime;
+                            X = touch.deltaPosition.x * rotationSpeed * Time.deltaTime;
+                        }
                     }
                 }
             }
-        }
             tpCamera.RotateCamera(X, Y);
         }
 
