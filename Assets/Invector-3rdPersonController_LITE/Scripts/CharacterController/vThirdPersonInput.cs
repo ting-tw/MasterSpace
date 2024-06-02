@@ -100,8 +100,10 @@ namespace Invector.vCharacterController
 
         public virtual void MoveInput()
         {
-            cc.input.x = _joystick.Horizontal;
-            cc.input.z = _joystick.Vertical;
+            cc.input.x = Mathf.Abs(_joystick.Horizontal) >= Mathf.Abs(Input.GetAxis(horizontalInput)) ?
+             Mathf.Abs(_joystick.Horizontal) : Input.GetAxis(horizontalInput);
+            cc.input.z = Mathf.Abs(_joystick.Vertical) >= Mathf.Abs(Input.GetAxis(verticallInput)) ?
+             Mathf.Abs(_joystick.Vertical) : Input.GetAxis(verticallInput);
         }
 
         protected virtual void CameraInput()
@@ -123,9 +125,6 @@ namespace Invector.vCharacterController
 
             if (tpCamera == null)
                 return;
-
-            // var Y = Input.GetAxis(rotateCameraYInput);
-            // var X = Input.GetAxis(rotateCameraXInput);
 
             float Y = 0;
             float X = 0;
@@ -149,21 +148,29 @@ namespace Invector.vCharacterController
                     }
                 }
             }
+
+            // develop (
+            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
+            {
+                Y = Input.GetAxis(rotateCameraYInput) * 1.4f;
+                X = Input.GetAxis(rotateCameraXInput) * 1.4f;
+            }
+            // ) develop
+
             tpCamera.RotateCamera(X, Y);
         }
 
         protected virtual void StrafeInput()
         {
-            // if (Input.GetKeyDown(strafeInput))
-            if (strafeClickHandler.PressDown())
+            if (strafeClickHandler.PressDown() || Input.GetKeyDown(strafeInput))
                 cc.Strafe();
         }
 
         protected virtual void SprintInput()
         {
-            if (sprintClickHandler.PressDown())
+            if (sprintClickHandler.PressDown() || Input.GetKeyDown(sprintInput))
                 cc.Sprint(true);
-            else if (sprintClickHandler.PressUp())
+            else if (sprintClickHandler.PressUp() || Input.GetKeyUp(sprintInput))
                 cc.Sprint(false);
         }
 
@@ -182,10 +189,10 @@ namespace Invector.vCharacterController
         protected virtual void JumpInput()
         {
             // if (Input.GetKeyDown(jumpInput) && JumpConditions())
-            if (jumpClickHandler.PressDown() && JumpConditions())
+            if ((jumpClickHandler.PressDown() || Input.GetKeyDown(jumpInput)) && JumpConditions())
                 cc.Jump();
         }
 
-        #endregion       
+        #endregion
     }
 }

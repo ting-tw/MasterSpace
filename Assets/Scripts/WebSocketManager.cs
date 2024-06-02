@@ -1,22 +1,33 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using WebSocketSharp;
 
 public class WebSocketManager : MonoBehaviour
 {
-    public Boolean wss;
-    public String server_ip;
-    public int port;
     public WebSocket ws;
     public int executionsPerSecond = 20;
     private float interval;
     private float timer;
     private string address;
+    private bool connected = false;
 
     public GameObject player;
+    public Camera vThirdPersonCamera;
+    public GameObject controlPrompts;
     public GameObject otherPlayerPrefab;
+
+    // UI
+    public Button connectBtn;
+    public Button closeBtn;
+    public Canvas menu;
+    public TMP_InputField addressInput;
+    public TMP_InputField portInput;
+    public TMP_Text logDisplay;
+
+
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
 
     private readonly Queue<Action> actions = new Queue<Action>();
@@ -24,14 +35,30 @@ public class WebSocketManager : MonoBehaviour
 
 
     void Start()
-
     {
+        connectBtn.onClick.AddListener(OnConnectBtnClick);
+        closeBtn.onClick.AddListener(OnCloseBtnClick);
+
+        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(player);
+        DontDestroyOnLoad(vThirdPersonCamera);
+        DontDestroyOnLoad(controlPrompts);
+
         interval = 1f / executionsPerSecond;
         timer = 0f;
+    }
 
-        address = (wss ? "wss" : "ws") + "://" + server_ip + ":" + port;
+    void OnConnectBtnClick()
+    {
+
+        address = "ws://" + addressInput.text + ":" + portInput.text;
 
         Debug.Log(address);
+
+        if (ws != null && ws.IsAlive)
+        {
+            ws.Close();
+        }
 
         ws = new WebSocket(address);
 
@@ -43,8 +70,15 @@ public class WebSocketManager : MonoBehaviour
         ws.Connect();
     }
 
+    void OnCloseBtnClick()
+    {
+        menu.enabled = false;
+    }
+
     void Update()
     {
+        if (!connected) return;
+
         ExecuteActions();
 
         timer += Time.deltaTime;
@@ -113,23 +147,29 @@ public class WebSocketManager : MonoBehaviour
         catch (Exception err)
         {
             Debug.LogError(err);
+            logDisplay.SetText(err.Message);
         }
     }
 
-    void OnOpen(object sender, System.EventArgs e)
+    void OnOpen(object sender, EventArgs e)
     {
         Debug.Log("WebSocket connection opened : " + address);
+        logDisplay.SetText("WebSocket connection opened : " + address);
+        connected = true;
     }
 
     void OnClose(object sender, CloseEventArgs e)
     {
         Debug.Log("WebSocket connection closed: " + e.Reason);
+        logDisplay.SetText("WebSocket connection closed: " + e.Reason);
+
+        connected = false;
     }
 
     void OnError(object sender, ErrorEventArgs e)
     {
-        Debug.LogError("WebSocket error: ");
-        Debug.LogError(e);
+        Debug.LogError("WebSocket error: " + e);
+        logDisplay.SetText("WebSocket error: " + e);
     }
 
     [System.Serializable]
