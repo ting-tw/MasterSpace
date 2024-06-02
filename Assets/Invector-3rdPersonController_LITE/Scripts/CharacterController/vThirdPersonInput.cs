@@ -101,9 +101,9 @@ namespace Invector.vCharacterController
         public virtual void MoveInput()
         {
             cc.input.x = Mathf.Abs(_joystick.Horizontal) >= Mathf.Abs(Input.GetAxis(horizontalInput)) ?
-             Mathf.Abs(_joystick.Horizontal) : Input.GetAxis(horizontalInput);
+             _joystick.Horizontal : Input.GetAxis(horizontalInput);
             cc.input.z = Mathf.Abs(_joystick.Vertical) >= Mathf.Abs(Input.GetAxis(verticallInput)) ?
-             Mathf.Abs(_joystick.Vertical) : Input.GetAxis(verticallInput);
+            _joystick.Vertical : Input.GetAxis(verticallInput);
         }
 
         protected virtual void CameraInput()

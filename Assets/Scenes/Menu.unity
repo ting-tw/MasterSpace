@@ -1966,7 +1966,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &755940304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2025,7 +2025,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 25
+  m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
@@ -3418,11 +3418,11 @@ MonoBehaviour:
   executionsPerSecond: 20
   player: {fileID: 1704771711}
   vThirdPersonCamera: {fileID: 963194227}
-  controlPrompts: {fileID: 755940303}
   otherPlayerPrefab: {fileID: 5622250314110406985, guid: 6de2c8826fb39b44b90e693beabbdf2f, type: 3}
+  controlPromptsUI: {fileID: 755940303}
+  menuUI: {fileID: 1795877266}
   connectBtn: {fileID: 49768591}
   closeBtn: {fileID: 1130444191}
-  menu: {fileID: 1795877266}
   addressInput: {fileID: 768236081}
   portInput: {fileID: 716951026}
   logDisplay: {fileID: 993603}
@@ -4402,7 +4402,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_TargetDisplay: 0
 --- !u!224 &1795877267
 RectTransform:
@@ -5429,8 +5429,8 @@ SceneRoots:
   - {fileID: 705507995}
   - {fileID: 2094864252}
   - {fileID: 608838313}
-  - {fileID: 755940307}
   - {fileID: 1704771717}
   - {fileID: 963194228}
   - {fileID: 1795877267}
+  - {fileID: 755940307}
   - {fileID: 1422021675}

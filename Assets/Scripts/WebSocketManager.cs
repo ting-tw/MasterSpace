@@ -16,13 +16,13 @@ public class WebSocketManager : MonoBehaviour
 
     public GameObject player;
     public Camera vThirdPersonCamera;
-    public GameObject controlPrompts;
     public GameObject otherPlayerPrefab;
 
     // UI
+    public Canvas controlPromptsUI;
+    public Canvas menuUI;
     public Button connectBtn;
     public Button closeBtn;
-    public Canvas menu;
     public TMP_InputField addressInput;
     public TMP_InputField portInput;
     public TMP_Text logDisplay;
@@ -42,7 +42,8 @@ public class WebSocketManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         DontDestroyOnLoad(player);
         DontDestroyOnLoad(vThirdPersonCamera);
-        DontDestroyOnLoad(controlPrompts);
+        DontDestroyOnLoad(controlPromptsUI);
+        DontDestroyOnLoad(menuUI);
 
         interval = 1f / executionsPerSecond;
         timer = 0f;
@@ -72,7 +73,8 @@ public class WebSocketManager : MonoBehaviour
 
     void OnCloseBtnClick()
     {
-        menu.enabled = false;
+        menuUI.enabled = false;
+        ws.Send("joinroom:" + "lobby");
     }
 
     void Update()
@@ -104,12 +106,13 @@ public class WebSocketManager : MonoBehaviour
 
     void WebSocketAction()
     {
-        ws.Send(GameObjectSerializer.SerializeGameObject(player));
+        ws.Send("playerData:" + GameObjectSerializer.SerializeGameObject(player));
     }
 
     void OnMessage(object sender, MessageEventArgs e)
     {
         var messageData = JsonUtility.FromJson<MessageData>(e.Data);
+        Debug.Log(messageData);
 
         try
         {
@@ -118,7 +121,7 @@ public class WebSocketManager : MonoBehaviour
             {
                 actions.Enqueue(() =>
                 {
-                    if (messageData.type == "message")
+                    if (messageData.type == "playerData")
                     {
                         if (!players.ContainsKey(messageData.uuid))
                         {
@@ -160,10 +163,20 @@ public class WebSocketManager : MonoBehaviour
 
     void OnClose(object sender, CloseEventArgs e)
     {
+        lock (lockObject)
+        {
+            actions.Enqueue(() =>
+            {
+                menuUI.enabled = true;
+                menuUI.gameObject.SetActive(true);
+            });
+        }
+
         Debug.Log("WebSocket connection closed: " + e.Reason);
         logDisplay.SetText("WebSocket connection closed: " + e.Reason);
 
         connected = false;
+
     }
 
     void OnError(object sender, ErrorEventArgs e)
