@@ -1,5 +1,6 @@
 ﻿using Invector;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class vThirdPersonCamera : MonoBehaviour
 {
@@ -61,8 +62,14 @@ public class vThirdPersonCamera : MonoBehaviour
     void Start()
     {
         Init();
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Init();
+    }
+    
     public void Init()
     {
         if (target == null)

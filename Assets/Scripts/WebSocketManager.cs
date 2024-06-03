@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using WebSocketSharp;
+using UnityEngine.SceneManagement;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -22,10 +23,11 @@ public class WebSocketManager : MonoBehaviour
     public Canvas controlPromptsUI;
     public Canvas menuUI;
     public Button connectBtn;
-    public Button closeBtn;
+    public Button[] roomBtns;
     public TMP_InputField addressInput;
     public TMP_InputField portInput;
     public TMP_Text logDisplay;
+    public GameObject eventSystem;
 
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
@@ -37,16 +39,28 @@ public class WebSocketManager : MonoBehaviour
     void Start()
     {
         connectBtn.onClick.AddListener(OnConnectBtnClick);
-        closeBtn.onClick.AddListener(OnCloseBtnClick);
+        foreach (var roomBtn in roomBtns)
+        {
+            roomBtn.onClick.AddListener(()=>OnRoomBtnClick(roomBtn.name));
+        }
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
 
         DontDestroyOnLoad(gameObject);
         DontDestroyOnLoad(player);
         DontDestroyOnLoad(vThirdPersonCamera);
         DontDestroyOnLoad(controlPromptsUI);
         DontDestroyOnLoad(menuUI);
+        DontDestroyOnLoad(eventSystem);
 
         interval = 1f / executionsPerSecond;
         timer = 0f;
+
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        ws.Send("joinroom:" + scene.name);
     }
 
     void OnConnectBtnClick()
@@ -71,10 +85,10 @@ public class WebSocketManager : MonoBehaviour
         ws.Connect();
     }
 
-    void OnCloseBtnClick()
+    void OnRoomBtnClick(string room)
     {
         menuUI.enabled = false;
-        ws.Send("joinroom:" + "lobby");
+        SceneManager.LoadScene(room);
     }
 
     void Update()
