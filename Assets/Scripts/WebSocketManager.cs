@@ -41,7 +41,7 @@ public class WebSocketManager : MonoBehaviour
         connectBtn.onClick.AddListener(OnConnectBtnClick);
         foreach (var roomBtn in roomBtns)
         {
-            roomBtn.onClick.AddListener(()=>OnRoomBtnClick(roomBtn.name));
+            roomBtn.onClick.AddListener(() => OnRoomBtnClick(roomBtn.name));
         }
 
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -126,48 +126,50 @@ public class WebSocketManager : MonoBehaviour
     void OnMessage(object sender, MessageEventArgs e)
     {
         var messageData = JsonUtility.FromJson<MessageData>(e.Data);
-        Debug.Log(messageData);
 
-        try
+        lock (lockObject)
         {
-
-            lock (lockObject)
+            actions.Enqueue(() =>
             {
-                actions.Enqueue(() =>
+                switch (messageData.type)
                 {
-                    if (messageData.type == "playerData")
-                    {
+                    case "playerData":
+
                         if (!players.ContainsKey(messageData.uuid))
                         {
-
                             // 創建新的玩家物件
                             GameObject newPlayer = Instantiate(otherPlayerPrefab);
                             players[messageData.uuid] = newPlayer;
                         }
-
                         // 更新玩家物件
                         GameObject player = players[messageData.uuid];
                         GameObjectSerializer.DeserializeGameObject(player, messageData.data);
-                    }
-                    else if (messageData.type == "disconnect")
-                    {
+
+                        break;
+                    case "disconnect":
                         if (players.ContainsKey(messageData.uuid))
                         {
                             // 刪除玩家物件
                             Destroy(players[messageData.uuid]);
                             players.Remove(messageData.uuid);
                         }
-                    }
-                });
-            }
-        }
-        catch (Exception err)
-        {
-            Debug.LogError(err);
-            logDisplay.SetText(err.Message);
+                        break;
+                    case "image":
+                        Debug.Log(messageData.imageName);
+
+                        GameObject targetObject = GameObject.Find(messageData.imageName);
+                        if (targetObject == null)
+                        {
+                            Debug.LogError("Object not found!");
+                            return;
+                        }
+
+                        ModifyDrawingImage(targetObject, messageData.imageData);
+                        break;
+                }
+            });
         }
     }
-
     void OnOpen(object sender, EventArgs e)
     {
         Debug.Log("WebSocket connection opened : " + address);
@@ -199,11 +201,51 @@ public class WebSocketManager : MonoBehaviour
         logDisplay.SetText("WebSocket error: " + e);
     }
 
+    public Texture2D Base64ToTexture2D(string base64)
+    {
+        byte[] imageBytes = System.Convert.FromBase64String(base64);
+        Texture2D texture = new Texture2D(2, 2);
+        if (texture.LoadImage(imageBytes))
+        {
+            return texture;
+        }
+        else
+        {
+            Debug.LogError("Failed to load texture from Base64 string.");
+            return null;
+        }
+    }
+
+    void ModifyDrawingImage(GameObject targetObject, string base64)
+    {
+        Texture2D texture = Base64ToTexture2D(base64);
+        if (texture != null)
+        {
+            Renderer renderer = targetObject.GetComponent<Renderer>();
+
+            if (renderer != null)
+            {
+                Material material = new Material(Shader.Find("Standard"))
+                {
+                    mainTexture = texture
+                };
+                renderer.material = material;
+            }
+            else
+            {
+                Debug.LogError("Renderer not found on target object.");
+            }
+        }
+    }
+
+
     [System.Serializable]
     public class MessageData
     {
         public string type;
         public string uuid;
         public string data;
+        public string imageName;
+        public string imageData;
     }
 }
