@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Invector.vCharacterController
 {
@@ -136,7 +138,7 @@ namespace Invector.vCharacterController
                     Vector2 touchPosition = touch.position;
 
                     // 檢查觸摸位置是否在螢幕右半邊
-                    if (touchPosition.x > Screen.width / 2)
+                    if (touchPosition.x > Screen.width / 2 && !IsPointerOverUIObject(touch))
                     {
                         // 根據觸摸事件類型執行不同的操作
                         if (touch.phase == TouchPhase.Moved)
@@ -159,6 +161,16 @@ namespace Invector.vCharacterController
 
             tpCamera.RotateCamera(X, Y);
         }
+
+        private bool IsPointerOverUIObject(Touch touch)
+        {
+            PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
+            eventDataCurrentPosition.position = new Vector2(touch.position.x, touch.position.y);
+            List<RaycastResult> results = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+            return results.Count > 0;
+        }
+
 
         protected virtual void StrafeInput()
         {

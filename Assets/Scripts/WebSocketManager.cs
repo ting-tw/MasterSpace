@@ -29,6 +29,9 @@ public class WebSocketManager : MonoBehaviour
     public TMP_Text logDisplay;
     public GameObject eventSystem;
 
+    public Button closeBtn;
+    public Canvas imageViewer;
+
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
 
@@ -38,11 +41,24 @@ public class WebSocketManager : MonoBehaviour
 
     void Start()
     {
+
+
         connectBtn.onClick.AddListener(OnConnectBtnClick);
         foreach (var roomBtn in roomBtns)
         {
             roomBtn.onClick.AddListener(() => OnRoomBtnClick(roomBtn.name));
         }
+
+        closeBtn.onClick.AddListener(() =>
+        {
+            lock (lockObject)
+            {
+                actions.Enqueue(() =>
+                {
+                    closeBtn.enabled = false;
+                });
+            };
+        });
 
         SceneManager.sceneLoaded += OnSceneLoaded;
 
@@ -203,7 +219,7 @@ public class WebSocketManager : MonoBehaviour
 
     public Texture2D Base64ToTexture2D(string base64)
     {
-        byte[] imageBytes = System.Convert.FromBase64String(base64);
+        byte[] imageBytes = Convert.FromBase64String(base64);
         Texture2D texture = new Texture2D(2, 2);
         if (texture.LoadImage(imageBytes))
         {
@@ -221,6 +237,8 @@ public class WebSocketManager : MonoBehaviour
         Texture2D texture = Base64ToTexture2D(base64);
         if (texture != null)
         {
+            targetObject.GetComponent<PlaneClickDetector>().texture2D = texture;
+
             Renderer renderer = targetObject.GetComponent<Renderer>();
 
             if (renderer != null)
