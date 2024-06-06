@@ -10,6 +10,9 @@ public class PlaneClickDetector : MonoBehaviour
     private const float dragThreshold = 10.0f; // Minimum distance for a drag (in pixels)
     ImageViewer imageViewer;
     public Texture2D texture2D;
+    public bool isLiked = false;
+    public int likeCount = 0;
+    public string comments = "";
 
 
     void Start()
@@ -99,9 +102,9 @@ public class PlaneClickDetector : MonoBehaviour
     void OnPlaneClicked()
     {
         Debug.Log(gameObject.name + " clicked!");
-
+        Debug.Log(isLiked);
         if (texture2D != null)
-            imageViewer.UpdateImageViewer(texture2D, true, 999, gameObject.name , "abc: 123");
+            imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments);
 
     }
 }

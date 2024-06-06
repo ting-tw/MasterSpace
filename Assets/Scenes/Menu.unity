@@ -5595,8 +5595,8 @@ MonoBehaviour:
   portInput: {fileID: 716951026}
   logDisplay: {fileID: 993603}
   eventSystem: {fileID: 2094864249}
-  closeBtn: {fileID: 0}
-  imageViewer: {fileID: 0}
+  closeBtn: {fileID: 99568662}
+  imageViewer: {fileID: 1635592719}
 --- !u!1 &1451751498
 GameObject:
   m_ObjectHideFlags: 0

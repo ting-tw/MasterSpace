@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ImageViewer : MonoBehaviour
 {
+    public WebSocketManager webSocketManager;
     public Image image;
     public Button LikeBtn;
     public TMP_Text likeCount;
@@ -20,9 +22,10 @@ public class ImageViewer : MonoBehaviour
     void Start()
     {
         canvas = gameObject.GetComponent<Canvas>();
+        LikeBtn.onClick.AddListener(OnLikeBtnClick);
     }
 
-    public void UpdateImageViewer(Texture2D newTexture, bool isLiked, int newLikeCount, string newTitle, string newComments)
+    public void UpdateImageViewer(Texture2D newTexture, string newTitle, bool isLiked, int newLikeCount, string newComments)
     {
         // 修改圖片
         if (image != null && newTexture != null)
@@ -34,20 +37,14 @@ public class ImageViewer : MonoBehaviour
         // 修改按鈕顏色
         if (LikeBtn != null)
         {
-            ColorBlock colors = LikeBtn.colors;
             if (isLiked)
             {
-                colors.normalColor = Color.white;
-                colors.highlightedColor = Color.white;
-                colors.pressedColor = Color.gray;
+                LikeBtn.GetComponent<Image>().color = Color.white;
             }
             else
             {
-                colors.normalColor = Color.black;
-                colors.highlightedColor = Color.black;
-                colors.pressedColor = Color.gray;
+                LikeBtn.GetComponent<Image>().color = Color.black;
             }
-            LikeBtn.colors = colors;
         }
 
         // 修改喜歡數量
@@ -69,6 +66,14 @@ public class ImageViewer : MonoBehaviour
         }
 
         canvas.enabled = true;
+    }
+
+    void OnLikeBtnClick()
+    {
+        webSocketManager.ws.Send(
+            "like:" + imageTitle.text +
+                (LikeBtn.GetComponent<Image>().color.Equals(Color.white) ? ":false" : ":true")
+        );
     }
 
 }

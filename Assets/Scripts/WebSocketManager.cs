@@ -32,6 +32,7 @@ public class WebSocketManager : MonoBehaviour
     public Button closeBtn;
     public Canvas imageViewer;
 
+    public TMP_InputField usernameInput;
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
 
@@ -55,7 +56,7 @@ public class WebSocketManager : MonoBehaviour
             {
                 actions.Enqueue(() =>
                 {
-                    closeBtn.enabled = false;
+                    imageViewer.enabled = false;
                 });
             };
         });
@@ -76,7 +77,8 @@ public class WebSocketManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        ws.Send("joinroom:" + scene.name);
+        Debug.Log(usernameInput.text);
+        ws.Send("joinroom:" + scene.name + ":" + usernameInput.text);
     }
 
     void OnConnectBtnClick()
@@ -176,9 +178,15 @@ public class WebSocketManager : MonoBehaviour
                         GameObject targetObject = GameObject.Find(messageData.imageName);
                         if (targetObject == null)
                         {
-                            Debug.LogError("Object not found!");
+                            Debug.LogError("Image Plane not found!");
                             return;
                         }
+
+                        PlaneClickDetector planeData = targetObject.GetComponent<PlaneClickDetector>();
+
+                        planeData.isLiked = messageData.isLiked;
+                        planeData.likeCount = messageData.likeCount;
+                        planeData.comments = messageData.comments;
 
                         ModifyDrawingImage(targetObject, messageData.imageData);
                         break;
@@ -265,5 +273,8 @@ public class WebSocketManager : MonoBehaviour
         public string data;
         public string imageName;
         public string imageData;
+        public bool isLiked;
+        public int likeCount;
+        public string comments;
     }
 }
