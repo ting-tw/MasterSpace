@@ -29,9 +29,6 @@ public class WebSocketManager : MonoBehaviour
     public TMP_Text logDisplay;
     public GameObject eventSystem;
 
-    public Button closeBtn;
-    public Canvas imageViewer;
-
     public TMP_InputField usernameInput;
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
@@ -42,24 +39,11 @@ public class WebSocketManager : MonoBehaviour
 
     void Start()
     {
-
-
         connectBtn.onClick.AddListener(OnConnectBtnClick);
         foreach (var roomBtn in roomBtns)
         {
             roomBtn.onClick.AddListener(() => OnRoomBtnClick(roomBtn.name));
         }
-
-        closeBtn.onClick.AddListener(() =>
-        {
-            lock (lockObject)
-            {
-                actions.Enqueue(() =>
-                {
-                    imageViewer.enabled = false;
-                });
-            };
-        });
 
         SceneManager.sceneLoaded += OnSceneLoaded;
 
@@ -124,6 +108,14 @@ public class WebSocketManager : MonoBehaviour
         }
     }
 
+    public void ExecuteInMainThread(Action action)
+    {
+        lock (lockObject)
+        {
+            actions.Enqueue(action);
+        }
+
+    }
     private void ExecuteActions()
     {
         lock (lockObject)
@@ -144,55 +136,55 @@ public class WebSocketManager : MonoBehaviour
     void OnMessage(object sender, MessageEventArgs e)
     {
         var messageData = JsonUtility.FromJson<MessageData>(e.Data);
-
-        lock (lockObject)
+        ExecuteInMainThread(() =>
         {
-            actions.Enqueue(() =>
+            switch (messageData.type)
             {
-                switch (messageData.type)
-                {
-                    case "playerData":
+                case "playerData":
 
-                        if (!players.ContainsKey(messageData.uuid))
-                        {
-                            // 創建新的玩家物件
-                            GameObject newPlayer = Instantiate(otherPlayerPrefab);
-                            players[messageData.uuid] = newPlayer;
-                        }
-                        // 更新玩家物件
-                        GameObject player = players[messageData.uuid];
-                        GameObjectSerializer.DeserializeGameObject(player, messageData.data);
+                    if (!players.ContainsKey(messageData.uuid))
+                    {
+                        // 創建新的玩家物件
+                        GameObject newPlayer = Instantiate(otherPlayerPrefab);
+                        players[messageData.uuid] = newPlayer;
+                    }
+                    // 更新玩家物件
+                    GameObject player = players[messageData.uuid];
+                    GameObjectSerializer.DeserializeGameObject(player, messageData.data);
 
-                        break;
-                    case "disconnect":
-                        if (players.ContainsKey(messageData.uuid))
-                        {
-                            // 刪除玩家物件
-                            Destroy(players[messageData.uuid]);
-                            players.Remove(messageData.uuid);
-                        }
-                        break;
-                    case "image":
-                        Debug.Log(messageData.imageName);
+                    break;
+                case "disconnect":
+                    if (players.ContainsKey(messageData.uuid))
+                    {
+                        // 刪除玩家物件
+                        Destroy(players[messageData.uuid]);
+                        players.Remove(messageData.uuid);
+                    }
+                    break;
+                case "image":
+                    Debug.Log("Loading: " + messageData.imageName);
 
-                        GameObject targetObject = GameObject.Find(messageData.imageName);
-                        if (targetObject == null)
-                        {
-                            Debug.LogError("Image Plane not found!");
-                            return;
-                        }
+                    GameObject targetObject = GameObject.Find(messageData.imageName);
+                    if (targetObject == null)
+                    {
+                        Debug.LogError("Image Plane not found!");
+                        return;
+                    }
 
-                        PlaneClickDetector planeData = targetObject.GetComponent<PlaneClickDetector>();
 
-                        planeData.isLiked = messageData.isLiked;
-                        planeData.likeCount = messageData.likeCount;
-                        planeData.comments = messageData.comments;
+                    targetObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
 
-                        ModifyDrawingImage(targetObject, messageData.imageData);
-                        break;
-                }
-            });
-        }
+                    ModifyDrawingImage(targetObject, messageData.imageData);
+                    break;
+                case "image_update":
+                    Debug.Log("Update: " + messageData.imageName);
+                    GameObject targetUpdateObject = GameObject.Find(messageData.imageName);
+
+                    targetUpdateObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+
+                    break;
+            }
+        });
     }
     void OnOpen(object sender, EventArgs e)
     {

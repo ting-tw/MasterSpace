@@ -19,6 +19,7 @@ public class PlaneClickDetector : MonoBehaviour
     {
         imageViewer = GameObject.Find("ImageViewer").GetComponent<ImageViewer>();
     }
+
     void Update()
     {
         // Handle mouse input
@@ -102,9 +103,17 @@ public class PlaneClickDetector : MonoBehaviour
     void OnPlaneClicked()
     {
         Debug.Log(gameObject.name + " clicked!");
-        Debug.Log(isLiked);
-        if (texture2D != null)
-            imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments);
+        imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments);
+    }
 
+    public void UpdateImage(bool isLiked, int likeCount, string comments)
+    {
+        this.isLiked = isLiked;
+        this.likeCount = likeCount;
+        this.comments = comments;
+        if (imageViewer.imageTitle.text == gameObject.name)
+        {
+            imageViewer.UpdateImageViewer(gameObject.name, isLiked, likeCount, comments);
+        }
     }
 }

@@ -23,6 +23,9 @@ public class ImageViewer : MonoBehaviour
     {
         canvas = gameObject.GetComponent<Canvas>();
         LikeBtn.onClick.AddListener(OnLikeBtnClick);
+
+        closeBtn.onClick.AddListener(OnCloseBtnClick);
+        submitBtn.onClick.AddListener(OnSubmitBtnClick);
     }
 
     public void UpdateImageViewer(Texture2D newTexture, string newTitle, bool isLiked, int newLikeCount, string newComments)
@@ -33,6 +36,13 @@ public class ImageViewer : MonoBehaviour
             Sprite newSprite = Sprite.Create(newTexture, new Rect(0, 0, newTexture.width, newTexture.height), new Vector2(0.5f, 0.5f));
             image.sprite = newSprite;
         }
+
+        UpdateImageViewer(newTitle, isLiked, newLikeCount, newComments);
+
+        canvas.enabled = true;
+    }
+    public void UpdateImageViewer(string newTitle, bool isLiked, int newLikeCount, string newComments)
+    {
 
         // 修改按鈕顏色
         if (LikeBtn != null)
@@ -64,10 +74,7 @@ public class ImageViewer : MonoBehaviour
         {
             comments.text = newComments;
         }
-
-        canvas.enabled = true;
     }
-
     void OnLikeBtnClick()
     {
         webSocketManager.ws.Send(
@@ -76,4 +83,15 @@ public class ImageViewer : MonoBehaviour
         );
     }
 
+    void OnCloseBtnClick()
+    {
+        webSocketManager.ExecuteInMainThread(() => canvas.enabled = false);
+    }
+
+    void OnSubmitBtnClick()
+    {
+        webSocketManager.ws.Send(
+            "comment:" + imageTitle.text + ":" + commentInput.text
+        );
+    }
 }
