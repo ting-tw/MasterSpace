@@ -18,6 +18,7 @@ public class ImageViewer : MonoBehaviour
     public TMP_Text comments;
     public Button closeBtn;
     public Canvas canvas;
+    public RectTransform panel;
 
     void Start()
     {
@@ -30,7 +31,7 @@ public class ImageViewer : MonoBehaviour
 
     public void UpdateImageViewer(Texture2D newTexture, string newTitle, bool isLiked, int newLikeCount, string newComments)
     {
-        // 修改圖片
+
         if (image != null && newTexture != null)
         {
             Sprite newSprite = Sprite.Create(newTexture, new Rect(0, 0, newTexture.width, newTexture.height), new Vector2(0.5f, 0.5f));
@@ -38,6 +39,8 @@ public class ImageViewer : MonoBehaviour
         }
 
         UpdateImageViewer(newTitle, isLiked, newLikeCount, newComments);
+
+        gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
 
         canvas.enabled = true;
     }
@@ -74,6 +77,8 @@ public class ImageViewer : MonoBehaviour
         {
             comments.text = newComments;
         }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(comments.GetComponent<RectTransform>());
     }
     void OnLikeBtnClick()
     {
