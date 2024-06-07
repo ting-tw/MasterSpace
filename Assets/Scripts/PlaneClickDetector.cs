@@ -102,6 +102,8 @@ public class PlaneClickDetector : MonoBehaviour
 
     void OnPlaneClicked()
     {
+        if (imageViewer.canvas.enabled) return;
+        
         Debug.Log(gameObject.name + " clicked!");
         imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments);
     }

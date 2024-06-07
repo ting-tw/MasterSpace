@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using WebSocketSharp;
 using UnityEngine.SceneManagement;
+using System.Collections;
+using UnityEngine.Networking;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -12,7 +14,8 @@ public class WebSocketManager : MonoBehaviour
     public int executionsPerSecond = 20;
     private float interval;
     private float timer;
-    private string address;
+    private string webSocket_address;
+    private string imageServer_address;
     private bool connected = false;
 
     public GameObject player;
@@ -27,12 +30,14 @@ public class WebSocketManager : MonoBehaviour
     public TMP_InputField addressInput;
     public TMP_InputField portInput;
     public TMP_Text logDisplay;
+    public TMP_InputField imageServerURL;
     public GameObject eventSystem;
 
     public TMP_InputField usernameInput;
 
-    private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
+    public GameObject imageViewer;
 
+    private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
     private readonly Queue<Action> actions = new Queue<Action>();
     private readonly object lockObject = new object();
 
@@ -53,6 +58,7 @@ public class WebSocketManager : MonoBehaviour
         DontDestroyOnLoad(controlPromptsUI);
         DontDestroyOnLoad(menuUI);
         DontDestroyOnLoad(eventSystem);
+        DontDestroyOnLoad(imageViewer);
 
         interval = 1f / executionsPerSecond;
         timer = 0f;
@@ -68,16 +74,16 @@ public class WebSocketManager : MonoBehaviour
     void OnConnectBtnClick()
     {
 
-        address = "ws://" + addressInput.text + ":" + portInput.text;
+        webSocket_address = "ws://" + addressInput.text + ":" + portInput.text;
 
-        Debug.Log(address);
+        Debug.Log(webSocket_address);
 
         if (ws != null && ws.IsAlive)
         {
             ws.Close();
         }
 
-        ws = new WebSocket(address);
+        ws = new WebSocket(webSocket_address);
 
         ws.OnMessage += OnMessage;
         ws.OnOpen += OnOpen;
@@ -174,7 +180,8 @@ public class WebSocketManager : MonoBehaviour
 
                     targetObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
 
-                    ModifyDrawingImage(targetObject, messageData.imageData);
+                    StartCoroutine(GetImageAndModify(targetObject, (imageServerURL.text.EndsWith("/") ? imageServerURL.text : imageServerURL.text + "/") + messageData.imagePath));
+                    // ModifyDrawingImage(targetObject, messageData.imageData);
                     break;
                 case "image_update":
                     Debug.Log("Update: " + messageData.imageName);
@@ -186,10 +193,30 @@ public class WebSocketManager : MonoBehaviour
             }
         });
     }
+
+    IEnumerator GetImageAndModify(GameObject targetObject, string url)
+    {
+        Debug.Log(url);
+
+        UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
+        
+        yield return request.SendWebRequest();
+
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError(request.error);
+        }
+        else
+        {
+            Texture2D texture = DownloadHandlerTexture.GetContent(request);
+
+            ModifyDrawingImage(targetObject, texture);
+        }
+    }
     void OnOpen(object sender, EventArgs e)
     {
-        Debug.Log("WebSocket connection opened : " + address);
-        logDisplay.SetText("WebSocket connection opened : " + address);
+        Debug.Log("WebSocket connection opened : " + webSocket_address);
+        logDisplay.SetText("WebSocket connection opened : " + webSocket_address);
         connected = true;
     }
 
@@ -217,43 +244,25 @@ public class WebSocketManager : MonoBehaviour
         logDisplay.SetText("WebSocket error: " + e);
     }
 
-    public Texture2D Base64ToTexture2D(string base64)
+    void ModifyDrawingImage(GameObject targetObject, Texture2D texture)
     {
-        byte[] imageBytes = Convert.FromBase64String(base64);
-        Texture2D texture = new Texture2D(2, 2);
-        if (texture.LoadImage(imageBytes))
+        targetObject.GetComponent<PlaneClickDetector>().texture2D = texture;
+
+        Renderer renderer = targetObject.GetComponent<Renderer>();
+
+        if (renderer != null)
         {
-            return texture;
+            Material material = new Material(Shader.Find("Standard"))
+            {
+                mainTexture = texture
+            };
+            renderer.material = material;
         }
         else
         {
-            Debug.LogError("Failed to load texture from Base64 string.");
-            return null;
+            Debug.LogError("Renderer not found on target object.");
         }
-    }
 
-    void ModifyDrawingImage(GameObject targetObject, string base64)
-    {
-        Texture2D texture = Base64ToTexture2D(base64);
-        if (texture != null)
-        {
-            targetObject.GetComponent<PlaneClickDetector>().texture2D = texture;
-
-            Renderer renderer = targetObject.GetComponent<Renderer>();
-
-            if (renderer != null)
-            {
-                Material material = new Material(Shader.Find("Standard"))
-                {
-                    mainTexture = texture
-                };
-                renderer.material = material;
-            }
-            else
-            {
-                Debug.LogError("Renderer not found on target object.");
-            }
-        }
     }
 
 
@@ -264,7 +273,7 @@ public class WebSocketManager : MonoBehaviour
         public string uuid;
         public string data;
         public string imageName;
-        public string imageData;
+        public string imagePath;
         public bool isLiked;
         public int likeCount;
         public string comments;
