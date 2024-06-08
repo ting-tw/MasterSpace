@@ -1,6 +1,8 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
+using System.Threading.Tasks;
 
 public class ImageViewer : MonoBehaviour
 {
@@ -26,39 +28,56 @@ public class ImageViewer : MonoBehaviour
         submitBtn.onClick.AddListener(OnSubmitBtnClick);
     }
 
+    public async Task UpdateImageViewerAsync(string imageUrl, string newTitle, bool isLiked, int newLikeCount, string newComments)
+    {
+        Texture2D newTexture = await DownloadImageAsync(imageUrl);
+        if (newTexture != null)
+        {
+            UpdateImageViewer(newTexture, newTitle, isLiked, newLikeCount, newComments);
+        }
+        else
+        {
+            UpdateImageViewer(newTitle, isLiked, newLikeCount, newComments);
+        }
+    }
+
+    private async Task<Texture2D> DownloadImageAsync(string imageUrl)
+    {
+        using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(imageUrl))
+        {
+            var operation = request.SendWebRequest();
+
+            while (!operation.isDone)
+            {
+                await Task.Yield();
+            }
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                return ((DownloadHandlerTexture)request.downloadHandler).texture;
+            }
+            else
+            {
+                Debug.LogError("Image download failed: " + request.error);
+                return null;
+            }
+        }
+    }
+
     public void UpdateImageViewer(Texture2D newTexture, string newTitle, bool isLiked, int newLikeCount, string newComments)
     {
+        // 批量更新 UI 元素
+        canvas.enabled = false;
+
         if (image != null && newTexture != null)
         {
             Sprite newSprite = Sprite.Create(newTexture, new Rect(0, 0, newTexture.width, newTexture.height), new Vector2(0.5f, 0.5f));
             image.sprite = newSprite;
         }
 
-        canvas.enabled = true;
-
-        UpdateImageViewer(newTitle, isLiked, newLikeCount, newComments);
-
-        Canvas.ForceUpdateCanvases();
-
-        gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
-
-        canvas.enabled = true;
-
-        controlPromptsUI.enabled = false;
-    }
-
-    public void UpdateImageViewer(string newTitle, bool isLiked, int newLikeCount, string newComments)
-    {
         if (LikeBtn != null)
         {
-            if (isLiked)
-            {
-                LikeBtn.GetComponent<Image>().color = Color.white;
-            }
-            else
-            {
-                LikeBtn.GetComponent<Image>().color = Color.black;
-            }
+            LikeBtn.GetComponent<Image>().color = isLiked ? Color.white : Color.black;
         }
 
         if (likeCount != null)
@@ -76,7 +95,52 @@ public class ImageViewer : MonoBehaviour
             comments.text = newComments;
         }
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(comments.GetComponent<RectTransform>());
+        canvas.enabled = true;
+        Canvas.ForceUpdateCanvases();
+
+        if (gameObject.GetComponent<ScrollRect>() != null)
+        {
+            gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
+        }
+
+        controlPromptsUI.enabled = false;
+    }
+
+    public void UpdateImageViewer(string newTitle, bool isLiked, int newLikeCount, string newComments)
+    {
+        // 批量更新 UI 元素
+        canvas.enabled = false;
+
+        if (LikeBtn != null)
+        {
+            LikeBtn.GetComponent<Image>().color = isLiked ? Color.white : Color.black;
+        }
+
+        if (likeCount != null)
+        {
+            likeCount.text = newLikeCount.ToString();
+        }
+
+        if (imageTitle != null)
+        {
+            imageTitle.text = newTitle;
+        }
+
+        if (comments != null)
+        {
+            comments.text = newComments;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(comments.GetComponent<RectTransform>());
+        }
+
+        canvas.enabled = true;
+        Canvas.ForceUpdateCanvases();
+
+        if (gameObject.GetComponent<ScrollRect>() != null)
+        {
+            gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
+        }
+
+        controlPromptsUI.enabled = false;
     }
 
     void OnLikeBtnClick()
