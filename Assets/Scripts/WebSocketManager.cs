@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
+using UnityEditor;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -30,13 +31,14 @@ public class WebSocketManager : MonoBehaviour
     public Button[] roomBtns;
     public TMP_InputField addressInput;
     public TMP_InputField portInput;
-    public TMP_Text logDisplay;
     public TMP_InputField imageServerURL;
     public GameObject eventSystem;
 
     public TMP_InputField usernameInput;
 
     public GameObject imageViewer;
+    public Button menuBtn;
+    public Button menuCloseBtn;
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
     private readonly Queue<Action> actions = new Queue<Action>();
@@ -45,7 +47,12 @@ public class WebSocketManager : MonoBehaviour
 
     void Start()
     {
+
         connectBtn.onClick.AddListener(OnConnectBtnClick);
+
+        menuBtn.onClick.AddListener(() => menuUI.enabled = true);
+        menuCloseBtn.onClick.AddListener(() => menuUI.enabled = false);
+
         foreach (var roomBtn in roomBtns)
         {
             roomBtn.onClick.AddListener(() => OnRoomBtnClick(roomBtn.name));
@@ -68,7 +75,7 @@ public class WebSocketManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log(usernameInput.text);
+        Debug.Log("Input Username: " + usernameInput.text);
         ws.Send("joinroom:" + scene.name + ":" + usernameInput.text);
     }
 
@@ -99,8 +106,8 @@ public class WebSocketManager : MonoBehaviour
 
     void OnRoomBtnClick(string room)
     {
-        menuUI.enabled = false;
         SceneManager.LoadScene(room);
+        menuUI.enabled = false;
     }
 
     void Update()
@@ -172,7 +179,7 @@ public class WebSocketManager : MonoBehaviour
                     }
                     break;
                 case "image":
-                    Debug.Log("Loading: " + messageData.imageName);
+                    Debug.Log("Loading Image From ImageServer: " + messageData.imageName);
 
                     GameObject targetObject = GameObject.Find(messageData.imageName);
                     if (targetObject == null)
@@ -184,14 +191,25 @@ public class WebSocketManager : MonoBehaviour
 
                     targetObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
 
-                    StartCoroutine(GetImageAndModify(targetObject, (imageServerURL.text.EndsWith("/") ? imageServerURL.text : imageServerURL.text + "/") + messageData.imagePath));
+                    imageServer_address = imageServerURL.text;
+
+                    if (imageServer_address == "")
+                        imageServer_address = addressInput.text + ":" + portInput.text;
+
+                    if (!imageServer_address.EndsWith("/"))
+                        imageServer_address += "/";
+
+                    StartCoroutine(GetImageAndModify(targetObject, imageServer_address + messageData.imagePath));
                     // ModifyDrawingImage(targetObject, messageData.imageData);
                     break;
                 case "image_update":
-                    Debug.Log("Update: " + messageData.imageName);
+                    Debug.Log("Update Image Data: " + messageData.imageName);
                     GameObject targetUpdateObject = GameObject.Find(messageData.imageName);
 
-                    targetUpdateObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+                    if (targetUpdateObject != null)
+                        targetUpdateObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+                    else
+                        Debug.LogError("Can't Find: " + messageData.imageName);
 
                     break;
             }
@@ -200,7 +218,7 @@ public class WebSocketManager : MonoBehaviour
 
     IEnumerator GetImageAndModify(GameObject targetObject, string url)
     {
-        Debug.Log(url);
+        Debug.Log("Downloading: " + url);
 
         UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
 
@@ -220,23 +238,15 @@ public class WebSocketManager : MonoBehaviour
     void OnOpen(object sender, EventArgs e)
     {
         Debug.Log("WebSocket connection opened : " + webSocket_address);
-        logDisplay.SetText("WebSocket connection opened : " + webSocket_address);
         connected = true;
+
     }
 
     void OnClose(object sender, CloseEventArgs e)
     {
-        lock (lockObject)
-        {
-            actions.Enqueue(() =>
-            {
-                menuUI.enabled = true;
-                menuUI.gameObject.SetActive(true);
-            });
-        }
+        ExecuteInMainThread(() => menuUI.enabled = true);
 
         Debug.Log("WebSocket connection closed: " + e.Reason);
-        logDisplay.SetText("WebSocket connection closed: " + e.Reason);
 
         connected = false;
 
@@ -245,7 +255,6 @@ public class WebSocketManager : MonoBehaviour
     void OnError(object sender, ErrorEventArgs e)
     {
         Debug.LogError("WebSocket error: " + e);
-        logDisplay.SetText("WebSocket error: " + e);
     }
 
     void ModifyDrawingImage(GameObject targetObject, Texture2D texture)
@@ -268,7 +277,6 @@ public class WebSocketManager : MonoBehaviour
         }
 
     }
-
 
     [System.Serializable]
     public class MessageData

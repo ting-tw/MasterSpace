@@ -1,43 +1,48 @@
-import { WebSocketServer, WebSocket } from 'ws';
-import { v4 as uuidv4 } from 'uuid';
-import { StringDecoder } from 'string_decoder';
-import chalk from 'chalk';
-import fs from 'fs';
-import { Low } from 'lowdb';
-import { JSONFile } from 'lowdb/node';
-import express from 'express';
+const WebSocketServer = require('ws').WebSocketServer;
+const WebSocket = require('ws');
+const { v4: uuidv4 } = require('uuid');
+const { StringDecoder } = require('string_decoder');
+const fs = require('fs');
+const express = require('express');
 
-const port = 8382;
+const { port } = require("./config.json");
 
 // 初始化 Express 應用
 const app = express();
 
 // 設置靜態目錄
-app.use('/', express.static('images'));
+app.use('/images', express.static('images'));
 
 // 啟動 HTTP 伺服器
 const server = app.listen(port, () => {
-    console.log(`HTTP server is listening on port ${port}`);
+    console.log("WebSocket and ImageServer are running on port " + port);
+    console.log("Realtime Player Data: http://localhost:" + port + "/realtime");
+    console.log("(crtl + left click to open)");
 });
 
 // 使用相同的端口為 WebSocket 伺服器
 const wss = new WebSocketServer({ server });
 
-const defaultData = { images: [] };
-const adapter = new JSONFile('db.json');
-const db = new Low(adapter, defaultData);
+const dbFilePath = 'db.json';
 
-async function initDB() {
-    await db.read();
-    if (!db.data) {
-        db.data = { images: [] };
-        await db.write();
+function readDatabase() {
+    if (fs.existsSync(dbFilePath)) {
+        const data = fs.readFileSync(dbFilePath, 'utf-8');
+        return JSON.parse(data);
+    } else {
+        return { images: [] };
     }
 }
 
+function writeDatabase(data) {
+    fs.writeFileSync(dbFilePath, JSON.stringify(data, null, 2));
+}
+
+const db = readDatabase();
+
 async function saveImage(room, imageName, imageData) {
     const dirPath = `./images/${room}`;
-    const filePath = `${dirPath}/${imageName}.png`;
+    const filePath = `${dirPath}/${imageName}.jpg`;
 
     // 確保目錄存在
     fs.mkdirSync(dirPath, { recursive: true });
@@ -46,24 +51,20 @@ async function saveImage(room, imageName, imageData) {
     fs.writeFileSync(filePath, imageData, 'base64');
 
     // 更新資料庫
-    await db.read();
-    db.data.images.push({
+    db.images.push({
         room,
         imageName,
         likedBy: [],
         comments: ""
     });
-    await db.write();
+    writeDatabase(db);
 }
 
 async function getImagesByRoom(room, username) {
-    await db.read();
-    const roomImages = db.data.images.filter(img => img.room == room);
+    const roomImages = db.images.filter(img => img.room == room);
 
     return roomImages.map(img => {
-        const imagePath = `${room}/${img.imageName}.jpg`;
-        // const imageData = fs.existsSync(imagePath) ? fs.readFileSync(imagePath).toString('base64') : null;
-
+        const imagePath = `images/${room}/${img.imageName}.jpg`;
         const isLiked = (username) && img.likedBy.includes(username);
         const likeCount = img.likedBy.length;
 
@@ -74,33 +75,30 @@ async function getImagesByRoom(room, username) {
             isLiked,
             likeCount,
             comments: img.comments,
+            likedBy: img.likedBy,
             type: 'image'
         };
     });
 }
 
 async function likeImage(room, imageName, playerName, isLiked) {
-    await db.read();
-    const image = db.data.images.find(img => img.room == room && img.imageName == imageName);
+    const image = db.images.find(img => img.room == room && img.imageName == imageName);
     if (isLiked == "true" && image && !image.likedBy.includes(playerName)) {
         image.likedBy.push(playerName);
-        await db.write();
+        writeDatabase(db);
         updateLikeAndComments(room, imageName, image);
-    }
-    else if (image && image.likedBy.includes(playerName)) {
+    } else if (image && image.likedBy.includes(playerName)) {
         image.likedBy = image.likedBy.filter(item => item != playerName);
-        await db.write();
+        writeDatabase(db);
         updateLikeAndComments(room, imageName, image);
-
     }
 }
 
 async function addComment(room, imageName, playerUUID, comment) {
-    await db.read();
-    const image = db.data.images.find(img => img.room == room && img.imageName == imageName);
+    const image = db.images.find(img => img.room == room && img.imageName == imageName);
     if (image) {
         image.comments += `${playerUUID}: ${comment}\n`;
-        await db.write();
+        writeDatabase(db);
         updateLikeAndComments(room, imageName, image);
     }
 }
@@ -114,11 +112,9 @@ function updateLikeAndComments(room, imageName, image) {
             isLiked: image.likedBy.includes(player.username),
             likeCount: image.likedBy.length,
             comments: image.comments
-        }))
-    })
+        }));
+    });
 }
-
-initDB();
 
 const players = new Map();
 
@@ -172,7 +168,7 @@ wss.on('connection', (ws) => {
     });
 
     ws.on('close', () => {
-        players.delete(ws.playerUUID)
+        players.delete(ws.playerUUID);
         // 當玩家斷開連線時，廣播玩家的 UUID 給所有玩家
         const disconnectMessage = JSON.stringify({ type: 'disconnect', uuid: playerUUID });
         wss.clients.forEach(client => {
@@ -183,38 +179,113 @@ wss.on('connection', (ws) => {
     });
 });
 
-if (true)
-    setInterval(() => {
+// 即時數據頁面
+app.get('/realtime', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Realtime Player Data</title>
+            <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .room { margin-bottom: 20px; }
+                .room-header { font-weight: bold; font-size: 1.2em; }
+                .player-card, .image-card { margin: 10px 0; }
+                .image-card img { max-width: 300px; }
+            </style>
+        </head>
+        <body>
+            <h1>Realtime Player Data</h1>
+            <div id="data" class="container"></div>
+            <script>
+                const fetchData = async () => {
+                    const response = await fetch('/api/realtime-data');
+                    const data = await response.json();
+                    const dataDiv = document.getElementById('data');
+                    dataDiv.innerHTML = '';
+                    for (const [room, players] of Object.entries(data.players)) {
+                        const roomDiv = document.createElement('div');
+                        roomDiv.classList.add('room');
+                        const roomHeader = document.createElement('div');
+                        roomHeader.classList.add('room-header');
+                        roomHeader.textContent = \`Room: \${room}\`;
+                        roomDiv.appendChild(roomHeader);
 
-        console.clear();
+                        players.forEach(player => {
+                            const playerCard = document.createElement('div');
+                            playerCard.classList.add('card', 'player-card');
+                            playerCard.innerHTML = \`
+                                <div class="card-body">
+                                    <h5 class="card-title">Username: \${player.username}</h5>
+                                    <p class="card-text">UUID: \${player.uuid}</p>
+                                    <p class="card-text">Player Data: \${player.playerData}</p>
+                                </div>
+                            \`;
+                            roomDiv.appendChild(playerCard);
+                        });
 
-        console.log(chalk.redBright('WebSocket Server port') + ' : ' + chalk.blueBright(port));
-        // 顯示玩家數量
-        console.log(chalk.green(`玩家數量: ${wss.clients.size}`));
+                        if (data.images[room]) {
+                            data.images[room].forEach(image => {
+                                const imageCard = document.createElement('div');
+                                imageCard.classList.add('card', 'image-card');
+                                imageCard.innerHTML = \`
+                                    <div class="card-body">
+                                        <h5 class="card-title">Image: \${image.imageName}</h5>
+                                        <img src="\${image.imagePath}" class="card-img-top" alt="\${image.imageName}">
+                                        <p class="card-text">Liked By: \${image.likedBy.join(', ')}</p>
+                                        <p class="card-text">Comments: \${image.comments.replace(/\\n/g, '<br>')}</p>
+                                    </div>
+                                \`;
+                                roomDiv.appendChild(imageCard);
+                            });
+                        }
 
-        console.log();
+                        dataDiv.appendChild(roomDiv);
+                    }
+                };
 
-        // 顯示每個玩家
-        Array.from(players.entries())
-            .reduce((acc, item) => {
-                if (!item[1].room) item[1].room = "menu";
-                if (!acc.has(item[1].room)) {
-                    acc.set(item[1].room, []);
-                }
-                item[1].uuid = item[0];
-                acc.get(item[1].room).push(item[1]);
-                return acc;
-            }, new Map())
-            .forEach((players, room) => {
-                console.log(chalk.blueBright(`Room: ${room}`));
-                players.forEach(player => {
-                    console.log(chalk.yellow(player.username));
-                    console.log(chalk.redBright(player.uuid));
-                    console.log(player.playerData);
-                    // const playerData = JSON.parse(player.playerData);
-                    // console.log('Animator State Data:', playerData.animatorStateData);
-                    // console.log('Transform Data:', playerData.transformData);
-                });
-                console.log();
-            });
-    }, 500);
+                setInterval(fetchData, 1000);
+                fetchData();
+            </script>
+        </body>
+        </html>
+    `);
+});
+
+// 提供即時數據的API
+app.get('/api/realtime-data', async (req, res) => {
+    const playerData = Array.from(players.entries())
+        .reduce((acc, item) => {
+            if (!item[1].room) item[1].room = "menu";
+            if (!acc.has(item[1].room)) {
+                acc.set(item[1].room, []);
+            }
+            item[1].uuid = item[0];
+            acc.get(item[1].room).push(item[1]);
+            return acc;
+        }, new Map());
+
+    const formattedData = { players: {}, images: {} };
+    playerData.forEach((players, room) => {
+        formattedData.players[room] = players.map(player => ({
+            username: player.username,
+            uuid: player.uuid,
+            playerData: player.playerData
+        }));
+    });
+
+    db.images.forEach(img => {
+        if (!formattedData.images[img.room]) {
+            formattedData.images[img.room] = [];
+        }
+        formattedData.images[img.room].push({
+            imageName: img.imageName,
+            imagePath: `/images/${img.room}/${img.imageName}.jpg`,
+            likedBy: img.likedBy,
+            comments: img.comments
+        });
+    });
+
+    res.json(formattedData);
+});

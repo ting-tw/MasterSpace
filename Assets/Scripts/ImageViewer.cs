@@ -28,89 +28,26 @@ public class ImageViewer : MonoBehaviour
         submitBtn.onClick.AddListener(OnSubmitBtnClick);
     }
 
-    public async Task UpdateImageViewerAsync(string imageUrl, string newTitle, bool isLiked, int newLikeCount, string newComments)
-    {
-        Texture2D newTexture = await DownloadImageAsync(imageUrl);
-        if (newTexture != null)
-        {
-            UpdateImageViewer(newTexture, newTitle, isLiked, newLikeCount, newComments);
-        }
-        else
-        {
-            UpdateImageViewer(newTitle, isLiked, newLikeCount, newComments);
-        }
-    }
-
-    private async Task<Texture2D> DownloadImageAsync(string imageUrl)
-    {
-        using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(imageUrl))
-        {
-            var operation = request.SendWebRequest();
-
-            while (!operation.isDone)
-            {
-                await Task.Yield();
-            }
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                return ((DownloadHandlerTexture)request.downloadHandler).texture;
-            }
-            else
-            {
-                Debug.LogError("Image download failed: " + request.error);
-                return null;
-            }
-        }
-    }
-
     public void UpdateImageViewer(Texture2D newTexture, string newTitle, bool isLiked, int newLikeCount, string newComments)
     {
-        // 批量更新 UI 元素
-        canvas.enabled = false;
-
         if (image != null && newTexture != null)
         {
             Sprite newSprite = Sprite.Create(newTexture, new Rect(0, 0, newTexture.width, newTexture.height), new Vector2(0.5f, 0.5f));
             image.sprite = newSprite;
         }
 
-        if (LikeBtn != null)
-        {
-            LikeBtn.GetComponent<Image>().color = isLiked ? Color.white : Color.black;
-        }
-
-        if (likeCount != null)
-        {
-            likeCount.text = newLikeCount.ToString();
-        }
-
-        if (imageTitle != null)
-        {
-            imageTitle.text = newTitle;
-        }
-
-        if (comments != null)
-        {
-            comments.text = newComments;
-        }
-
-        canvas.enabled = true;
-        Canvas.ForceUpdateCanvases();
+        UpdateImageViewer(newTitle, isLiked, newLikeCount, newComments);
 
         if (gameObject.GetComponent<ScrollRect>() != null)
         {
             gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
         }
 
-        controlPromptsUI.enabled = false;
+        commentInput.text = "";
     }
 
     public void UpdateImageViewer(string newTitle, bool isLiked, int newLikeCount, string newComments)
     {
-        // 批量更新 UI 元素
-        canvas.enabled = false;
-
         if (LikeBtn != null)
         {
             LikeBtn.GetComponent<Image>().color = isLiked ? Color.white : Color.black;
@@ -132,13 +69,14 @@ public class ImageViewer : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(comments.GetComponent<RectTransform>());
         }
 
-        canvas.enabled = true;
+        UpdateImageViewer();
+    }
+
+    public void UpdateImageViewer()
+    {
         Canvas.ForceUpdateCanvases();
 
-        if (gameObject.GetComponent<ScrollRect>() != null)
-        {
-            gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
-        }
+        canvas.enabled = true;
 
         controlPromptsUI.enabled = false;
     }
@@ -165,5 +103,7 @@ public class ImageViewer : MonoBehaviour
         webSocketManager.ws.Send(
             "comment:" + imageTitle.text + ":" + commentInput.text
         );
+        
+        commentInput.text = "";
     }
 }

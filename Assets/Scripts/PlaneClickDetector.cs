@@ -9,6 +9,7 @@ public class PlaneClickDetector : MonoBehaviour
     private const float clickThreshold = 0.2f; // Maximum time for a click (in seconds)
     private const float dragThreshold = 10.0f; // Minimum distance for a drag (in pixels)
     ImageViewer imageViewer;
+    public Canvas menuUI;
     public Texture2D texture2D;
     public bool isLiked = false;
     public int likeCount = 0;
@@ -18,6 +19,7 @@ public class PlaneClickDetector : MonoBehaviour
     void Start()
     {
         imageViewer = GameObject.Find("ImageViewer").GetComponent<ImageViewer>();
+        menuUI = GameObject.Find("Menu UI").GetComponent<Canvas>();
     }
 
     void Update()
@@ -103,7 +105,8 @@ public class PlaneClickDetector : MonoBehaviour
     void OnPlaneClicked()
     {
         if (imageViewer.canvas.enabled) return;
-        
+        if (menuUI.enabled) return;
+
         Debug.Log(gameObject.name + " clicked!");
         imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments);
     }
