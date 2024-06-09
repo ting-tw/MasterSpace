@@ -3,16 +3,14 @@
     {
       "room": "Room1",
       "imageName": "Drawing1",
-      "likedBy": [
-        "d"
-      ],
-      "comments": "abc: 123\nabc: 123\nabc: 123\nabc: 123\nabc: 123\nabc: 12\nabc: 12\nabc: 123\nabc: 123131231\nabc: 123131231\nabc: 123131231\nabc: 123\n"
+      "likedBy": [],
+      "comments": ""
     },
     {
       "room": "Room1",
       "imageName": "Drawing2",
       "likedBy": [],
-      "comments": "abc: 12\nabc: 12\nabc: 12\nabc: 12\nabc: 12\nabc: 1\n"
+      "comments": ""
     }
   ]
 }

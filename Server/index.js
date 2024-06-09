@@ -289,3 +289,10 @@ app.get('/api/realtime-data', async (req, res) => {
 
     res.json(formattedData);
 });
+
+process.on('uncaughtException', (err) => {
+    console.error('未捕捉到的異常：', err);
+    console.log('按 Enter 鍵退出...');
+    process.stdin.resume();
+    process.stdin.on('data', process.exit.bind(process, 1));
+});
