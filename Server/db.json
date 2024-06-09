@@ -1,0 +1,18 @@
+{
+  "images": [
+    {
+      "room": "Room1",
+      "imageName": "Drawing1",
+      "likedBy": [
+        "abc"
+      ],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing2",
+      "likedBy": [],
+      "comments": ""
+    }
+  ]
+}

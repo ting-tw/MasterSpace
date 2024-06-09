@@ -7,6 +7,7 @@ using WebSocketSharp;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using UnityEngine.Networking;
+using System.Threading.Tasks;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -83,7 +84,10 @@ public class WebSocketManager : MonoBehaviour
             ws.Close();
         }
 
-        ws = new WebSocket(webSocket_address);
+        ws = new WebSocket(webSocket_address)
+        {
+            WaitTime = TimeSpan.FromMilliseconds(2000)
+        };
 
         ws.OnMessage += OnMessage;
         ws.OnOpen += OnOpen;
@@ -199,7 +203,7 @@ public class WebSocketManager : MonoBehaviour
         Debug.Log(url);
 
         UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
-        
+
         yield return request.SendWebRequest();
 
         if (request.result != UnityWebRequest.Result.Success)
