@@ -16,6 +16,7 @@
   },
   "pkg": {
     "scripts": "index.js",
+    "outputPath": "dist",
     "targets": [
       "node16-win-x64"
     ]

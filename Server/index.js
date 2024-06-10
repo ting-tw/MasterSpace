@@ -37,10 +37,10 @@ udpServer.on('message', (message, rinfo) => {
 
 udpServer.on('listening', () => {
     const address = udpServer.address();
-    console.log(`UDP server listening on pot ${address.port}`);
+    console.log(`UDP server listening on port ${address.port}`);
 });
 
-udpServer.bind(8383);
+udpServer.bind(8382);
 
 
 const dbFilePath = 'db.json';

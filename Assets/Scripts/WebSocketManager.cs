@@ -13,6 +13,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using Unity.VisualScripting.Dependencies.NCalc;
+using System.Text.RegularExpressions;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -43,7 +44,7 @@ public class WebSocketManager : MonoBehaviour
     public GameObject imageViewer;
     public Button menuBtn;
     public Button menuCloseBtn;
-    public GameObject connectioInfo;
+    public CanvasGroup connectioInfo;
     public Button connectionInfoBtn;
     public Button connectionInfoCloseBtn;
     public TMP_Text statusDisplay;
@@ -54,7 +55,7 @@ public class WebSocketManager : MonoBehaviour
 
     private UdpClient udpClient;
     private IPEndPoint broadcastEndPoint;
-    private const int BroadcastPort = 8383;
+    private const int BroadcastPort = 8382;
 
 
     void Start()
@@ -74,8 +75,25 @@ public class WebSocketManager : MonoBehaviour
         menuBtn.onClick.AddListener(() => menuUI.enabled = true);
         menuCloseBtn.onClick.AddListener(() => menuUI.enabled = false);
 
-        connectionInfoBtn.onClick.AddListener(() => connectioInfo.SetActive(true));
-        connectionInfoCloseBtn.onClick.AddListener(() => connectioInfo.SetActive(false));
+
+        connectioInfo.gameObject.SetActive(true);
+
+        connectioInfo.alpha = 0;
+        connectioInfo.interactable = false;
+        connectioInfo.blocksRaycasts = false;
+
+        connectionInfoBtn.onClick.AddListener(() =>
+        {
+            connectioInfo.alpha = 1;
+            connectioInfo.interactable = true;
+            connectioInfo.blocksRaycasts = true;
+        });
+        connectionInfoCloseBtn.onClick.AddListener(() =>
+        {
+            connectioInfo.alpha = 0;
+            connectioInfo.interactable = false;
+            connectioInfo.blocksRaycasts = false;
+        });
 
         foreach (var roomBtn in roomBtns)
         {
@@ -120,10 +138,12 @@ public class WebSocketManager : MonoBehaviour
 
             if (receivedMessage.Contains("WebSocket server is here"))
             {
-                string address = result.RemoteEndPoint.Address.ToString();
-                addressInput.text = address;
-                Debug.Log($"已確定 {address} 為WebSocket伺服器位址");
-                statusDisplay.text = "確定伺服器位址，等待連線";
+                addressInput.text = result.RemoteEndPoint.Address.ToString();
+                portInput.text = result.RemoteEndPoint.Port.ToString();
+                Debug.Log($"已確定 {result.RemoteEndPoint} 為WebSocket伺服器位址");
+                Debug.Log("不再等待回應");
+
+                statusDisplay.text = "確定伺服器位址，開始連線";
                 OnConnectBtnClick();
                 break;
             }
@@ -132,10 +152,10 @@ public class WebSocketManager : MonoBehaviour
             {
                 statusDisplay.text = "失敗: 找不到伺服器";
                 Console.WriteLine("UDP等待回應時間超過10秒");
+                Debug.Log("不再等待回應");
                 break;
             }
         }
-        Debug.Log("不再等待回應");
     }
 
 
