@@ -60,7 +60,6 @@ public class WebSocketManager : MonoBehaviour
 
     void Start()
     {
-
         udpClient = new UdpClient
         {
             EnableBroadcast = true
@@ -74,13 +73,6 @@ public class WebSocketManager : MonoBehaviour
 
         menuBtn.onClick.AddListener(() => menuUI.enabled = true);
         menuCloseBtn.onClick.AddListener(() => menuUI.enabled = false);
-
-
-        connectioInfo.gameObject.SetActive(true);
-
-        connectioInfo.alpha = 0;
-        connectioInfo.interactable = false;
-        connectioInfo.blocksRaycasts = false;
 
         connectionInfoBtn.onClick.AddListener(() =>
         {
@@ -338,7 +330,7 @@ public class WebSocketManager : MonoBehaviour
         ExecuteInMainThread(() => menuUI.enabled = true);
 
         statusDisplay.text = "錯誤: 連線關閉";
-        Debug.Log("WebSocket 連線關閉 原因: " + e.Reason);
+        Debug.Log("WebSocket 連線關閉: " + e.Reason);
 
         connected = false;
 
