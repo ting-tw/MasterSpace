@@ -3,7 +3,9 @@
     {
       "room": "Room1",
       "imageName": "Drawing1",
-      "likedBy": [],
+      "likedBy": [
+        "tester111"
+      ],
       "comments": ""
     },
     {
