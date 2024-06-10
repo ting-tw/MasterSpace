@@ -9,6 +9,10 @@ using System.Collections;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
 using UnityEditor;
+using System.Net.Sockets;
+using System.Net;
+using System.Text;
+using Unity.VisualScripting.Dependencies.NCalc;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -39,19 +43,39 @@ public class WebSocketManager : MonoBehaviour
     public GameObject imageViewer;
     public Button menuBtn;
     public Button menuCloseBtn;
+    public GameObject connectioInfo;
+    public Button connectionInfoBtn;
+    public Button connectionInfoCloseBtn;
+    public TMP_Text statusDisplay;
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
     private readonly Queue<Action> actions = new Queue<Action>();
     private readonly object lockObject = new object();
 
+    private UdpClient udpClient;
+    private IPEndPoint broadcastEndPoint;
+    private const int BroadcastPort = 8383;
+
 
     void Start()
     {
+
+        udpClient = new UdpClient
+        {
+            EnableBroadcast = true
+        };
+        broadcastEndPoint = new IPEndPoint(IPAddress.Broadcast, BroadcastPort);
+
+        SendBroadcastMessage();
+        ListenForUdpResponses();
 
         connectBtn.onClick.AddListener(OnConnectBtnClick);
 
         menuBtn.onClick.AddListener(() => menuUI.enabled = true);
         menuCloseBtn.onClick.AddListener(() => menuUI.enabled = false);
+
+        connectionInfoBtn.onClick.AddListener(() => connectioInfo.SetActive(true));
+        connectionInfoCloseBtn.onClick.AddListener(() => connectioInfo.SetActive(false));
 
         foreach (var roomBtn in roomBtns)
         {
@@ -73,9 +97,51 @@ public class WebSocketManager : MonoBehaviour
 
     }
 
+    private void SendBroadcastMessage()
+    {
+        string message = "Discover WebSocket Server";
+        byte[] data = Encoding.UTF8.GetBytes(message);
+        udpClient.Send(data, data.Length, broadcastEndPoint);
+        Debug.Log("在區域網路中廣播UDP來尋找伺服器");
+        statusDisplay.text = "正在尋找伺服器";
+    }
+
+    private async void ListenForUdpResponses()
+    {
+        System.Diagnostics.Stopwatch stopwatch = new();
+        stopwatch.Start();
+
+        Debug.Log("等待回應");
+        while (true)
+        {
+            UdpReceiveResult result = await udpClient.ReceiveAsync();
+            string receivedMessage = Encoding.UTF8.GetString(result.Buffer);
+            Debug.Log($"收到來自 {result.RemoteEndPoint} 的 UDP 訊息 : {receivedMessage}");
+
+            if (receivedMessage.Contains("WebSocket server is here"))
+            {
+                string address = result.RemoteEndPoint.Address.ToString();
+                addressInput.text = address;
+                Debug.Log($"已確定 {address} 為WebSocket伺服器位址");
+                statusDisplay.text = "確定伺服器位址，等待連線";
+                OnConnectBtnClick();
+                break;
+            }
+
+            if (stopwatch.ElapsedMilliseconds > 10000)
+            {
+                statusDisplay.text = "失敗: 找不到伺服器";
+                Console.WriteLine("UDP等待回應時間超過10秒");
+                break;
+            }
+        }
+        Debug.Log("不再等待回應");
+    }
+
+
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log("Input Username: " + usernameInput.text);
+        Debug.Log("上傳使用者名稱: " + usernameInput.text);
         ws.Send("joinroom:" + scene.name + ":" + usernameInput.text);
     }
 
@@ -84,7 +150,8 @@ public class WebSocketManager : MonoBehaviour
 
         webSocket_address = "ws://" + addressInput.text + ":" + portInput.text;
 
-        Debug.Log(webSocket_address);
+        statusDisplay.text = "嘗試連線WebSocket";
+        Debug.Log("嘗試連線WebSocket: " + webSocket_address);
 
         if (ws != null && ws.IsAlive)
         {
@@ -179,12 +246,12 @@ public class WebSocketManager : MonoBehaviour
                     }
                     break;
                 case "image":
-                    Debug.Log("Loading Image From ImageServer: " + messageData.imageName);
+                    Debug.Log("開始從ImageServer獲取圖片: " + messageData.imageName);
 
                     GameObject targetObject = GameObject.Find(messageData.imageName);
                     if (targetObject == null)
                     {
-                        Debug.LogError("Image Plane not found!");
+                        Debug.LogError("(image)找不到物件: " + messageData.imageName);
                         return;
                     }
 
@@ -196,6 +263,9 @@ public class WebSocketManager : MonoBehaviour
                     if (imageServer_address == "")
                         imageServer_address = addressInput.text + ":" + portInput.text;
 
+                    if (!imageServer_address.StartsWith("http://") && !imageServer_address.StartsWith("https://"))
+                        imageServer_address = "http://" + imageServer_address;
+
                     if (!imageServer_address.EndsWith("/"))
                         imageServer_address += "/";
 
@@ -203,13 +273,13 @@ public class WebSocketManager : MonoBehaviour
                     // ModifyDrawingImage(targetObject, messageData.imageData);
                     break;
                 case "image_update":
-                    Debug.Log("Update Image Data: " + messageData.imageName);
+                    Debug.Log("準備更新圖片資料: " + messageData.imageName);
                     GameObject targetUpdateObject = GameObject.Find(messageData.imageName);
 
                     if (targetUpdateObject != null)
                         targetUpdateObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
                     else
-                        Debug.LogError("Can't Find: " + messageData.imageName);
+                        Debug.LogError("(image_update)找不到物件: " + messageData.imageName);
 
                     break;
             }
@@ -237,7 +307,8 @@ public class WebSocketManager : MonoBehaviour
     }
     void OnOpen(object sender, EventArgs e)
     {
-        Debug.Log("WebSocket connection opened : " + webSocket_address);
+        statusDisplay.text = "連線成功";
+        Debug.Log("WebSocket 連線成功: " + webSocket_address);
         connected = true;
 
     }
@@ -246,7 +317,8 @@ public class WebSocketManager : MonoBehaviour
     {
         ExecuteInMainThread(() => menuUI.enabled = true);
 
-        Debug.Log("WebSocket connection closed: " + e.Reason);
+        statusDisplay.text = "錯誤: 連線關閉";
+        Debug.Log("WebSocket 連線關閉 原因: " + e.Reason);
 
         connected = false;
 
@@ -254,7 +326,7 @@ public class WebSocketManager : MonoBehaviour
 
     void OnError(object sender, ErrorEventArgs e)
     {
-        Debug.LogError("WebSocket error: " + e);
+        Debug.LogError("WebSocket 錯誤: " + e);
     }
 
     void ModifyDrawingImage(GameObject targetObject, Texture2D texture)

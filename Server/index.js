@@ -4,6 +4,8 @@ const { v4: uuidv4 } = require('uuid');
 const { StringDecoder } = require('string_decoder');
 const fs = require('fs');
 const express = require('express');
+const dgram = require('dgram');
+const udpServer = dgram.createSocket('udp4');
 
 const { port } = require("./config.json");
 
@@ -22,6 +24,24 @@ const server = app.listen(port, () => {
 
 // 使用相同的端口為 WebSocket 伺服器
 const wss = new WebSocketServer({ server });
+
+// UDP伺服器
+udpServer.on('message', (message, rinfo) => {
+    console.log(`UDP server got: ${message} from ${rinfo.address}:${rinfo.port}`);
+    // Respond to the broadcast message
+    const responseMessage = Buffer.from('WebSocket server is here');
+    udpServer.send(responseMessage, 0, responseMessage.length, rinfo.port, rinfo.address, (err) => {
+        if (err) console.error(err);
+    });
+});
+
+udpServer.on('listening', () => {
+    const address = udpServer.address();
+    console.log(`UDP server listening on pot ${address.port}`);
+});
+
+udpServer.bind(8383);
+
 
 const dbFilePath = 'db.json';
 

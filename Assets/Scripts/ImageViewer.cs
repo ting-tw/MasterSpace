@@ -1,8 +1,6 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Networking;
-using System.Threading.Tasks;
 
 public class ImageViewer : MonoBehaviour
 {
