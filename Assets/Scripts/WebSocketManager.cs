@@ -14,6 +14,7 @@ using System.Net;
 using System.Text;
 using Unity.VisualScripting.Dependencies.NCalc;
 using System.Text.RegularExpressions;
+using Unity.VisualScripting;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -100,7 +101,6 @@ public class WebSocketManager : MonoBehaviour
         DontDestroyOnLoad(controlPromptsUI);
         DontDestroyOnLoad(menuUI);
         DontDestroyOnLoad(eventSystem);
-        DontDestroyOnLoad(imageViewer);
 
         interval = 1f / executionsPerSecond;
         timer = 0f;
@@ -289,7 +289,10 @@ public class WebSocketManager : MonoBehaviour
                     GameObject targetUpdateObject = GameObject.Find(messageData.imageName);
 
                     if (targetUpdateObject != null)
-                        targetUpdateObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+                        if (targetUpdateObject.GetComponent<PlaneClickDetector>() != null)
+                            targetUpdateObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+                        else
+                            targetUpdateObject.GetComponent<_3DObjectClickDetector>().Update3DObject(messageData.isLiked, messageData.likeCount, messageData.comments);
                     else
                         Debug.LogError("(image_update)找不到物件: " + messageData.imageName);
 

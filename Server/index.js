@@ -50,7 +50,7 @@ function readDatabase() {
         const data = fs.readFileSync(dbFilePath, 'utf-8');
         return JSON.parse(data);
     } else {
-        return { images: [] };
+        return { images: [], objects: [] };
     }
 }
 
@@ -95,22 +95,53 @@ async function getImagesByRoom(room, username) {
             isLiked,
             likeCount,
             comments: img.comments,
-            likedBy: img.likedBy,
             type: 'image'
+        };
+    });
+}
+
+async function getObjectsByRoom(room, username) {
+    const roomObjects = db.objects.filter(obj => obj.room == room);
+
+    return roomObjects.map(obj => {
+        const isLiked = (username) && obj.likedBy.includes(username);
+        const likeCount = obj.likedBy.length;
+
+        return {
+            type: "image_update",
+            imageName: obj.imageName,
+            isLiked,
+            likeCount,
+            comments: obj.comments,
         };
     });
 }
 
 async function likeImage(room, imageName, playerName, isLiked) {
     const image = db.images.find(img => img.room == room && img.imageName == imageName);
-    if (isLiked == "true" && image && !image.likedBy.includes(playerName)) {
-        image.likedBy.push(playerName);
-        writeDatabase(db);
-        updateLikeAndComments(room, imageName, image);
-    } else if (image && image.likedBy.includes(playerName)) {
-        image.likedBy = image.likedBy.filter(item => item != playerName);
-        writeDatabase(db);
-        updateLikeAndComments(room, imageName, image);
+    if (image) {
+        if (isLiked == "true" && !image.likedBy.includes(playerName)) {
+            image.likedBy.push(playerName);
+            writeDatabase(db);
+            updateLikeAndComments(room, imageName, image);
+        } else if (image.likedBy.includes(playerName)) {
+            image.likedBy = image.likedBy.filter(item => item != playerName);
+            writeDatabase(db);
+            updateLikeAndComments(room, imageName, image);
+        }
+        return;
+    }
+    const object = db.objects.find(obj => obj.room == room && obj.imageName == imageName);
+    if (object) {
+        if (isLiked == "true" && !object.likedBy.includes(playerName)) {
+            object.likedBy.push(playerName);
+            writeDatabase(db);
+        } else if (object.likedBy.includes(playerName)) {
+            object.likedBy = object.likedBy.filter(item => item != playerName);
+            writeDatabase(db);
+        }
+        updateLikeAndComments(room, imageName, object);
+        return;
     }
 }
 
@@ -120,6 +151,13 @@ async function addComment(room, imageName, playerUUID, comment) {
         image.comments += `${playerUUID}: ${comment}\n`;
         writeDatabase(db);
         updateLikeAndComments(room, imageName, image);
+        return;
+    }
+    const object = db.objects.find(obj => obj.room == room && obj.imageName == imageName);
+    if (object) {
+        object.comments += `${playerUUID}: ${comment}\n`;
+        writeDatabase(db);
+        updateLikeAndComments(room, imageName, object);
     }
 }
 
@@ -175,6 +213,11 @@ wss.on('connection', (ws) => {
                         ws.send(JSON.stringify(img));
                     });
                 });
+                getObjectsByRoom(room, username).then(objs => {
+                    objs.forEach(obj => {
+                        ws.send(JSON.stringify(obj));
+                    });
+                })
                 break;
             case 'like':
                 const [likeImageName, isLiked] = data.split(':');

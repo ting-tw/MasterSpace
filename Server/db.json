@@ -3,14 +3,28 @@
     {
       "room": "Room1",
       "imageName": "Drawing1",
-      "likedBy": [],
-      "comments": ""
+      "likedBy": [
+        "tester111"
+      ],
+      "comments": "tester111: 111\n"
     },
     {
       "room": "Room1",
       "imageName": "Drawing2",
       "likedBy": [],
-      "comments": ""
+      "comments": "d: 123\nd: 123\nd: 123\n"
+    }
+  ],
+  "objects": [
+    {
+      "room": "Room1",
+      "imageName": "mbira",
+      "likedBy": [
+        "abc",
+        "w",
+        "d"
+      ],
+      "comments": "d: 1\nd: 1\nd: 23\nd: 1\ntester111: 5578367\n\ntester111: 123\n\n"
     }
   ]
 }

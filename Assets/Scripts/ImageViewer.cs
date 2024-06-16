@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ImageViewer : MonoBehaviour
@@ -16,6 +17,10 @@ public class ImageViewer : MonoBehaviour
     public Canvas canvas;
     public RectTransform panel;
     public Canvas controlPromptsUI;
+    public RawImage _3DViewRawImage;
+    public GameObject[] _3DViewObjects;
+    public GameObject _3DViewObject;
+    public Camera _3DViewCamera;
 
     void Start()
     {
@@ -24,10 +29,21 @@ public class ImageViewer : MonoBehaviour
 
         closeBtn.onClick.AddListener(OnCloseBtnClick);
         submitBtn.onClick.AddListener(OnSubmitBtnClick);
+
+        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(_3DViewCamera);
+
+        foreach (var obj in _3DViewObjects)
+        {
+            DontDestroyOnLoad(obj);
+        }
     }
 
     public void UpdateImageViewer(Texture2D newTexture, string newTitle, bool isLiked, int newLikeCount, string newComments)
     {
+        _3DViewRawImage.gameObject.SetActive(false);
+        image.gameObject.SetActive(true);
+
         if (image != null && newTexture != null)
         {
             Sprite newSprite = Sprite.Create(newTexture, new Rect(0, 0, newTexture.width, newTexture.height), new Vector2(0.5f, 0.5f));
@@ -79,6 +95,34 @@ public class ImageViewer : MonoBehaviour
         controlPromptsUI.enabled = false;
     }
 
+    public void UpdateImageViewer(GameObject newObject, string newTitle, bool isLiked, int newLikeCount, string newComments)
+    {
+        _3DViewObject = newObject;
+
+        foreach (var obj in _3DViewObjects)
+        {
+            if (obj == _3DViewObject)
+            {
+                obj.SetActive(true);
+            }
+            else
+            {
+                obj.SetActive(false);
+            }
+        }
+        _3DViewRawImage.gameObject.SetActive(true);
+        image.gameObject.SetActive(false);
+
+        UpdateImageViewer(newTitle, isLiked, newLikeCount, newComments);
+
+        if (gameObject.GetComponent<ScrollRect>() != null)
+        {
+            gameObject.GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
+        }
+
+        commentInput.text = "";
+    }
+
     void OnLikeBtnClick()
     {
         webSocketManager.ws.Send(
@@ -101,7 +145,7 @@ public class ImageViewer : MonoBehaviour
         webSocketManager.ws.Send(
             "comment:" + imageTitle.text + ":" + commentInput.text
         );
-        
+
         commentInput.text = "";
     }
 }
