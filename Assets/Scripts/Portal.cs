@@ -11,6 +11,8 @@ public class Portal : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Player"))
         {
+            other.gameObject.transform.position = Vector3.zero;
+
             SceneManager.LoadScene(room);
         }
     }

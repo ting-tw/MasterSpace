@@ -50,6 +50,9 @@ public class WebSocketManager : MonoBehaviour
     public Button connectionInfoCloseBtn;
     public TMP_Text statusDisplay;
 
+    public RawImageClickHandler PerspectiveBtn;
+
+
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
     private readonly Queue<Action> actions = new Queue<Action>();
     private readonly object lockObject = new object();
@@ -72,8 +75,8 @@ public class WebSocketManager : MonoBehaviour
 
         connectBtn.onClick.AddListener(OnConnectBtnClick);
 
-        menuBtn.onClick.AddListener(() => menuUI.enabled = true);
-        menuCloseBtn.onClick.AddListener(() => menuUI.enabled = false);
+        menuBtn.onClick.AddListener(() => OpenMenu());
+        menuCloseBtn.onClick.AddListener(() => CloseMenu());
 
         connectionInfoBtn.onClick.AddListener(() =>
         {
@@ -107,6 +110,16 @@ public class WebSocketManager : MonoBehaviour
 
     }
 
+    void OpenMenu()
+    {
+        menuUI.enabled = true;
+        usernameInput.interactable = true;
+    }
+    void CloseMenu()
+    {
+        usernameInput.interactable = false;
+        menuUI.enabled = false;
+    }
     private void SendBroadcastMessage()
     {
         string message = "Discover WebSocket Server";
@@ -185,9 +198,11 @@ public class WebSocketManager : MonoBehaviour
 
     void OnRoomBtnClick(string room)
     {
+        player.transform.position = Vector3.zero;
         SceneManager.LoadScene(room);
-        menuUI.enabled = false;
+        CloseMenu();
     }
+
 
     void Update()
     {
@@ -201,6 +216,25 @@ public class WebSocketManager : MonoBehaviour
         {
             timer -= interval;
             WebSocketAction();
+        }
+
+
+        if (PerspectiveBtn.PressDown())
+        {
+            vThirdPersonCamera c = Camera.main.GetComponent<vThirdPersonCamera>();
+            if (c.defaultDistance == 2.5f)
+            {
+                int layerMask = 1 << LayerMask.NameToLayer("Player");
+                Camera.main.cullingMask &= ~(1 << layerMask);
+                c.defaultDistance = 0f;
+            }
+            else
+            {
+                int layerMask = 1 << LayerMask.NameToLayer("Player");
+                Camera.main.cullingMask |= (1 << layerMask);
+                c.defaultDistance = 2.5f;
+            }
+
         }
     }
 

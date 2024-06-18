@@ -26,6 +26,7 @@ namespace Invector.vCharacterController
         #endregion
 
         [SerializeField]
+        [Header("Mobile")]
         private FixedJoystick _joystick;
         public GameObject SprintBtn;
         public GameObject JumpBtn;

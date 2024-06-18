@@ -102,9 +102,6 @@ public class _3DObjectClickDetector : MonoBehaviour
 
     public void Update3DObject(bool isLiked, int likeCount, string comments)
     {
-        Debug.Log(isLiked);
-        Debug.Log(likeCount);
-        Debug.Log(comments);
         this.isLiked = isLiked;
         this.likeCount = likeCount;
         this.comments = comments;
