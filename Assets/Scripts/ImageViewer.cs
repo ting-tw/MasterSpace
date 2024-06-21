@@ -39,8 +39,14 @@ public class ImageViewer : MonoBehaviour
         }
     }
 
-    public void UpdateImageViewer(Texture2D newTexture, string newTitle, bool isLiked, int newLikeCount, string newComments)
+    public void UpdateImageViewer(Texture2D newTexture, string newTitle, bool isLiked, int newLikeCount, string newComments, bool portrait)
     {
+        RectTransform rectTransform = image.GetComponent<RectTransform>();
+
+        rectTransform.sizeDelta = portrait ? new Vector2(500, 800) : new Vector2(800, 500);
+        rectTransform.localScale = portrait ? new Vector3(1, 1, 1) : new Vector3(0.625f, 1.6f, 1);
+        rectTransform.rotation = portrait ? Quaternion.Euler(0, 0, 0) : Quaternion.Euler(0, 0, 90f);
+
         _3DViewRawImage.gameObject.SetActive(false);
         image.gameObject.SetActive(true);
 

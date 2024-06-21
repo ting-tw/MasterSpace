@@ -15,6 +15,7 @@ using System.Text;
 using Unity.VisualScripting.Dependencies.NCalc;
 using System.Text.RegularExpressions;
 using Unity.VisualScripting;
+using UnityEngine.Events;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -45,7 +46,7 @@ public class WebSocketManager : MonoBehaviour
     public GameObject imageViewer;
     public Button menuBtn;
     public Button menuCloseBtn;
-    public CanvasGroup connectioInfo;
+    public CanvasGroup connectionInfo;
     public Button connectionInfoBtn;
     public Button connectionInfoCloseBtn;
     public TMP_Text statusDisplay;
@@ -78,18 +79,8 @@ public class WebSocketManager : MonoBehaviour
         menuBtn.onClick.AddListener(() => OpenMenu());
         menuCloseBtn.onClick.AddListener(() => CloseMenu());
 
-        connectionInfoBtn.onClick.AddListener(() =>
-        {
-            connectioInfo.alpha = 1;
-            connectioInfo.interactable = true;
-            connectioInfo.blocksRaycasts = true;
-        });
-        connectionInfoCloseBtn.onClick.AddListener(() =>
-        {
-            connectioInfo.alpha = 0;
-            connectioInfo.interactable = false;
-            connectioInfo.blocksRaycasts = false;
-        });
+        connectionInfoBtn.onClick.AddListener(ConnectionInfoOpen);
+        connectionInfoCloseBtn.onClick.AddListener(ConnectionInfoClose);
 
         foreach (var roomBtn in roomBtns)
         {
@@ -109,9 +100,23 @@ public class WebSocketManager : MonoBehaviour
         timer = 0f;
 
     }
+    void ConnectionInfoOpen()
+    {
+        connectionInfo.alpha = 1;
+        connectionInfo.interactable = true;
+        connectionInfo.blocksRaycasts = true;
+    }
+    void ConnectionInfoClose()
+    {
+        connectionInfo.alpha = 0;
+        connectionInfo.interactable = false;
+        connectionInfo.blocksRaycasts = false;
+    }
+
 
     void OpenMenu()
     {
+        ConnectionInfoClose();
         menuUI.enabled = true;
         usernameInput.interactable = true;
     }
@@ -201,6 +206,7 @@ public class WebSocketManager : MonoBehaviour
         player.transform.position = Vector3.zero;
         SceneManager.LoadScene(room);
         CloseMenu();
+        menuCloseBtn.gameObject.SetActive(true);
     }
 
 
@@ -224,18 +230,32 @@ public class WebSocketManager : MonoBehaviour
             vThirdPersonCamera c = Camera.main.GetComponent<vThirdPersonCamera>();
             if (c.defaultDistance == 2.5f)
             {
-                int layerMask = 1 << LayerMask.NameToLayer("Player");
-                Camera.main.cullingMask &= ~(1 << layerMask);
                 c.defaultDistance = 0f;
+
+                int layerMask = LayerMask.NameToLayer("Player");
+                Camera.main.cullingMask &= ~(1 << layerMask);
+
             }
             else
             {
-                int layerMask = 1 << LayerMask.NameToLayer("Player");
-                Camera.main.cullingMask |= (1 << layerMask);
                 c.defaultDistance = 2.5f;
+
+                StartCoroutine(WaitAndExecute(0.25f, () =>
+                {
+                    int layerMask = LayerMask.NameToLayer("Player");
+                    Camera.main.cullingMask |= 1 << layerMask;
+
+                }));
+
             }
 
         }
+    }
+
+    IEnumerator WaitAndExecute(float delay, System.Action action)
+    {
+        yield return new WaitForSeconds(delay);
+        action?.Invoke();
     }
 
     public void ExecuteInMainThread(Action action)
@@ -271,26 +291,34 @@ public class WebSocketManager : MonoBehaviour
             switch (messageData.type)
             {
                 case "playerData":
-
                     if (!players.ContainsKey(messageData.uuid))
                     {
-                        // 創建新的玩家物件
                         GameObject newPlayer = Instantiate(otherPlayerPrefab);
                         players[messageData.uuid] = newPlayer;
                     }
-                    // 更新玩家物件
-                    GameObject player = players[messageData.uuid];
-                    GameObjectSerializer.DeserializeGameObject(player, messageData.data);
 
+                    GameObject player;
+                    if (players.TryGetValue(messageData.uuid, out player))
+                    {
+                        if (player != null)
+                        {
+                            GameObjectSerializer.DeserializeGameObject(player, messageData.data);
+                        }
+                    }
                     break;
+
                 case "disconnect":
                     if (players.ContainsKey(messageData.uuid))
                     {
-                        // 刪除玩家物件
-                        Destroy(players[messageData.uuid]);
+                        GameObject disconnectedPlayer = players[messageData.uuid];
+                        if (disconnectedPlayer != null)
+                        {
+                            Destroy(disconnectedPlayer);
+                        }
                         players.Remove(messageData.uuid);
                     }
                     break;
+
                 case "image":
                     Debug.Log("開始從ImageServer獲取圖片: " + messageData.imageName);
 
@@ -301,9 +329,7 @@ public class WebSocketManager : MonoBehaviour
                         return;
                     }
 
-
                     targetObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
-
                     imageServer_address = imageServerURL.text;
 
                     if (imageServer_address == "")
@@ -316,20 +342,36 @@ public class WebSocketManager : MonoBehaviour
                         imageServer_address += "/";
 
                     StartCoroutine(GetImageAndModify(targetObject, imageServer_address + messageData.imagePath));
-                    // ModifyDrawingImage(targetObject, messageData.imageData);
                     break;
+
                 case "image_update":
                     Debug.Log("準備更新圖片資料: " + messageData.imageName);
                     GameObject targetUpdateObject = GameObject.Find(messageData.imageName);
 
                     if (targetUpdateObject != null)
-                        if (targetUpdateObject.GetComponent<PlaneClickDetector>() != null)
-                            targetUpdateObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+                    {
+                        PlaneClickDetector planeClickDetector = targetUpdateObject.GetComponent<PlaneClickDetector>();
+                        if (planeClickDetector != null)
+                        {
+                            planeClickDetector.UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+                        }
                         else
-                            targetUpdateObject.GetComponent<_3DObjectClickDetector>().Update3DObject(messageData.isLiked, messageData.likeCount, messageData.comments);
+                        {
+                            _3DObjectClickDetector objectClickDetector = targetUpdateObject.GetComponent<_3DObjectClickDetector>();
+                            if (objectClickDetector != null)
+                            {
+                                objectClickDetector.Update3DObject(messageData.isLiked, messageData.likeCount, messageData.comments);
+                            }
+                            else
+                            {
+                                Debug.LogError("(image_update)找不到 PlaneClickDetector 或 _3DObjectClickDetector: " + messageData.imageName);
+                            }
+                        }
+                    }
                     else
+                    {
                         Debug.LogError("(image_update)找不到物件: " + messageData.imageName);
-
+                    }
                     break;
             }
         });

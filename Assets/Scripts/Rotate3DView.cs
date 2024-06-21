@@ -61,7 +61,7 @@ public class Rotate3DView : MonoBehaviour
     {
         if (Input.GetMouseButton(0)) // 當按住滑鼠左鍵時
         {
-            float rotationSpeed = 100f;
+            float rotationSpeed = 200f;
             float rotationX = Input.GetAxis("Mouse X") * rotationSpeed;
             float rotationY = Input.GetAxis("Mouse Y") * rotationSpeed;
 
@@ -75,7 +75,7 @@ public class Rotate3DView : MonoBehaviour
 
     void RotateObject(Vector2 deltaPosition)
     {
-        float rotationSpeed = 0.1f; // 控制旋轉速度的變量
+        float rotationSpeed = 0.05f; // 控制旋轉速度的變量
         float rotationX = deltaPosition.y * rotationSpeed;
         float rotationY = -deltaPosition.x * rotationSpeed;
 

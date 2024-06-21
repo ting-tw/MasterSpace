@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -14,6 +15,7 @@ public class PlaneClickDetector : MonoBehaviour
     public bool isLiked = false;
     public int likeCount = 0;
     public string comments = "";
+    public bool isPortrait;
 
 
     void Start()
@@ -107,7 +109,7 @@ public class PlaneClickDetector : MonoBehaviour
         if (imageViewer.canvas.enabled) return;
         if (menuUI.enabled) return;
 
-        imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments);
+        imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments, isPortrait);
     }
 
     public void UpdateImage(bool isLiked, int likeCount, string comments)

@@ -33,9 +33,7 @@
     {
       "room": "Room1",
       "imageName": "Drawing6",
-      "likedBy": [
-        "tester111"
-      ],
+      "likedBy": [],
       "comments": ""
     },
     {
@@ -73,9 +71,7 @@
     {
       "room": "Room2",
       "imageName": "Drawing1",
-      "likedBy": [
-        "tester111"
-      ],
+      "likedBy": [],
       "comments": ""
     },
     {
@@ -113,10 +109,7 @@
     {
       "room": "Room1",
       "imageName": "mbira",
-      "likedBy": [
-        "tester111",
-        "ytleiting"
-      ],
+      "likedBy": [],
       "comments": ""
     }
   ]
