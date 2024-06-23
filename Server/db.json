@@ -42,14 +42,17 @@
       "room": "Room1",
       "imageName": "Drawing7",
       "likedBy": [
-        "ytleiting"
+        "ytleiting",
+        "tester111"
       ],
-      "comments": ""
+      "comments": "tester111: 留言\n"
     },
     {
       "room": "Room1",
       "imageName": "Drawing8",
-      "likedBy": [],
+      "likedBy": [
+        "tester111"
+      ],
       "comments": ""
     },
     {
@@ -117,7 +120,7 @@
         "tester111",
         "ytleiting"
       ],
-      "comments": ""
+      "comments": "tester111: 留言板\n"
     }
   ]
 }

@@ -28,12 +28,10 @@ namespace Invector.vCharacterController
         [SerializeField]
         [Header("Mobile")]
         private FixedJoystick _joystick;
-        public GameObject SprintBtn;
-        public GameObject JumpBtn;
-        public GameObject StrafeBtn;
-        private RawImageClickHandler sprintClickHandler;
-        private RawImageClickHandler jumpClickHandler;
-        private RawImageClickHandler strafeClickHandler;
+        public RawImageClickHandler sprintBtn;
+        public RawImageClickHandler jumpBtn;
+        public RawImageClickHandler strafeBtn;
+        public RawImageClickHandler PerspectiveBtn;
 
         public float rotationSpeed; // 旋轉速度
 
@@ -41,9 +39,6 @@ namespace Invector.vCharacterController
 
         protected virtual void Start()
         {
-            sprintClickHandler = SprintBtn.GetComponent<RawImageClickHandler>();
-            jumpClickHandler = JumpBtn.GetComponent<RawImageClickHandler>();
-            strafeClickHandler = StrafeBtn.GetComponent<RawImageClickHandler>();
 
             InitilizeController();
             InitializeTpCamera();
@@ -175,15 +170,27 @@ namespace Invector.vCharacterController
 
         protected virtual void StrafeInput()
         {
-            if (strafeClickHandler.PressDown() || Input.GetKeyDown(strafeInput))
-                cc.Strafe();
+            if (strafeBtn.PressDown())
+            {
+                if (!PerspectiveBtn.switchValue)
+                {
+                    cc.isStrafing = strafeBtn.switchValue;
+                }
+                else
+                {
+                    cc.isStrafing = true;
+                }
+            }
         }
 
         protected virtual void SprintInput()
         {
-            if (sprintClickHandler.PressDown() || Input.GetKeyDown(sprintInput))
+            if (sprintBtn.PressDown())
+                // if (cc.isSprinting)
+                // cc.Sprint(false);
+                // else
                 cc.Sprint(true);
-            else if (sprintClickHandler.PressUp() || Input.GetKeyUp(sprintInput))
+            else if (sprintBtn.PressUp())
                 cc.Sprint(false);
         }
 
@@ -202,7 +209,7 @@ namespace Invector.vCharacterController
         protected virtual void JumpInput()
         {
             // if (Input.GetKeyDown(jumpInput) && JumpConditions())
-            if ((jumpClickHandler.PressDown() || Input.GetKeyDown(jumpInput)) && JumpConditions())
+            if (jumpBtn.PressDown() && JumpConditions())
                 cc.Jump();
         }
 

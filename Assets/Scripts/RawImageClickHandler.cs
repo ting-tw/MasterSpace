@@ -1,15 +1,26 @@
+using Invector.vCharacterController;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class RawImageClickHandler : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
+    public bool isSwitch;
+    public bool switchValue = false;
+    public KeyCode keyboardInput;
     private bool pressdown = false;
     private bool pressup = false;
+    public RawImage rawImage;
     public bool PressDown()
     {
         if (pressdown)
         {
+            if (isSwitch)
+            {
+                switchValue = !switchValue;
+                rawImage.color = switchValue ? Color.gray : Color.white;
+            }
             pressdown = false;
             return true;
         }
@@ -31,25 +42,46 @@ public class RawImageClickHandler : MonoBehaviour, IPointerDownHandler, IPointer
         }
     }
 
-    RawImage rawImage;
     void Start()
     {
         rawImage = GetComponent<RawImage>();
+    }
+    void Update()
+    {
+        if (Input.GetKeyDown(keyboardInput))
+        {
+            OnKeyDown();
+        }
+        if (Input.GetKeyUp(keyboardInput))
+        {
+            OnKeyUp();
+        }
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
         if (eventData.pointerCurrentRaycast.gameObject == rawImage.gameObject)
         {
-            pressdown = true;
-            pressup = false;
+            OnKeyDown();
         }
     }
 
+    public void OnKeyDown()
+    {
+        pressdown = true;
+        pressup = false;
+        if (!isSwitch)
+            rawImage.color = Color.gray;
+    }
     public void OnPointerUp(PointerEventData eventData)
+    {
+        OnKeyUp();
+    }
+    public void OnKeyUp()
     {
         pressdown = false;
         pressup = true;
-
+        if (!isSwitch)
+            rawImage.color = Color.white;
     }
 }

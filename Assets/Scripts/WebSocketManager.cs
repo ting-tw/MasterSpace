@@ -16,6 +16,7 @@ using Unity.VisualScripting.Dependencies.NCalc;
 using System.Text.RegularExpressions;
 using Unity.VisualScripting;
 using UnityEngine.Events;
+using Invector.vCharacterController;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -51,7 +52,8 @@ public class WebSocketManager : MonoBehaviour
     public Button connectionInfoCloseBtn;
     public TMP_Text statusDisplay;
 
-    public RawImageClickHandler PerspectiveBtn;
+    public RawImageClickHandler perspectiveBtn;
+    public RawImageClickHandler strafeBtn;
 
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
@@ -225,16 +227,17 @@ public class WebSocketManager : MonoBehaviour
         }
 
 
-        if (PerspectiveBtn.PressDown())
+        if (perspectiveBtn.PressDown())
         {
             vThirdPersonCamera c = Camera.main.GetComponent<vThirdPersonCamera>();
-            if (c.defaultDistance == 2.5f)
+            if (perspectiveBtn.switchValue)
             {
                 c.defaultDistance = 0f;
 
                 int layerMask = LayerMask.NameToLayer("Player");
                 Camera.main.cullingMask &= ~(1 << layerMask);
 
+                player.GetComponent<vThirdPersonController>().isStrafing = true;
             }
             else
             {
@@ -244,6 +247,8 @@ public class WebSocketManager : MonoBehaviour
                 {
                     int layerMask = LayerMask.NameToLayer("Player");
                     Camera.main.cullingMask |= 1 << layerMask;
+
+                    player.GetComponent<vThirdPersonController>().isStrafing = strafeBtn.switchValue;
 
                 }));
 
@@ -291,19 +296,17 @@ public class WebSocketManager : MonoBehaviour
             switch (messageData.type)
             {
                 case "playerData":
-                    if (!players.ContainsKey(messageData.uuid))
-                    {
-                        GameObject newPlayer = Instantiate(otherPlayerPrefab);
-                        players[messageData.uuid] = newPlayer;
-                    }
-
                     GameObject player;
-                    if (players.TryGetValue(messageData.uuid, out player))
+                    if (players.TryGetValue(messageData.uuid, out player) && player != null)
                     {
-                        if (player != null)
-                        {
-                            GameObjectSerializer.DeserializeGameObject(player, messageData.data);
-                        }
+                        GameObjectSerializer.DeserializeGameObject(player, messageData.data);
+                    }
+                    else
+                    {
+                        player = Instantiate(otherPlayerPrefab);
+                        players[messageData.uuid] = player;
+
+                        GameObjectSerializer.DeserializeGameObject(player, messageData.data);
                     }
                     break;
 
@@ -439,6 +442,15 @@ public class WebSocketManager : MonoBehaviour
             Debug.LogError("Renderer not found on target object.");
         }
 
+    }
+    void OnDestroy()
+    {
+        // 程式結束時關閉 WebSocket
+        if (ws != null)
+        {
+            ws.Close();
+            ws = null;
+        }
     }
 
     [System.Serializable]

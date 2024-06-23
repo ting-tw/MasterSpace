@@ -207,6 +207,14 @@ wss.on('connection', (ws) => {
                 });
                 break;
             case 'joinroom':
+                const disconnectMessage = JSON.stringify({ type: 'disconnect', uuid: playerUUID });
+                if (data.split(":")[0] != room)
+                    wss.clients.forEach(client => {
+                        if (client !== ws && client.readyState === WebSocket.OPEN && players.get(client.playerUUID)?.room == room) {
+                            client.send(disconnectMessage);
+                        }
+                    });
+
                 [room, username] = data.split(":");
                 getImagesByRoom(room, username).then(images => {
                     images.forEach(img => {
