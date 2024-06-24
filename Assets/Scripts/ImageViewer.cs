@@ -5,7 +5,11 @@ using UnityEngine.UI;
 
 public class ImageViewer : MonoBehaviour
 {
+    [Header("WebSocket")]
     public WebSocketManager webSocketManager;
+
+    [Header("內部元件")]
+    public Canvas canvas;
     public Image image;
     public Button LikeBtn;
     public TMP_Text likeCount;
@@ -14,13 +18,17 @@ public class ImageViewer : MonoBehaviour
     public Button submitBtn;
     public TMP_Text comments;
     public Button closeBtn;
-    public Canvas canvas;
     public RectTransform panel;
     public Canvas controlPromptsUI;
     public RawImage _3DViewRawImage;
     public GameObject[] _3DViewObjects;
     public GameObject _3DViewObject;
     public Camera _3DViewCamera;
+    [Header("Zoom頁面")]
+    public GameObject zoomPage;
+    public Image zoomImage;
+    public RawImage zoom3DViewRawImage;
+
 
     void Start()
     {
@@ -36,6 +44,30 @@ public class ImageViewer : MonoBehaviour
         foreach (var obj in _3DViewObjects)
         {
             DontDestroyOnLoad(obj);
+        }
+    }
+    public void OpenZoomPage()
+    {
+        zoomPage.gameObject.SetActive(true);
+
+        if (image.isActiveAndEnabled)
+        {
+            zoomImage.sprite = image.sprite;
+            RectTransform imageRectTransform = image.GetComponent<RectTransform>();
+            RectTransform zoomImageRectTransform = zoomImage.GetComponent<RectTransform>();
+
+            zoomImageRectTransform.sizeDelta = imageRectTransform.sizeDelta * 1.2f;
+            zoomImageRectTransform.localScale = imageRectTransform.localScale;
+            zoomImageRectTransform.rotation = imageRectTransform.rotation;
+
+            zoom3DViewRawImage.gameObject.SetActive(false);
+            zoomImage.gameObject.SetActive(true);
+        }
+        else
+        {
+            zoom3DViewRawImage.GetComponent<RectTransform>().localScale = new Vector2(1.2f, 1.2f);
+            zoom3DViewRawImage.gameObject.SetActive(true);
+            zoomImage.gameObject.SetActive(false);
         }
     }
 
@@ -98,6 +130,8 @@ public class ImageViewer : MonoBehaviour
 
         canvas.enabled = true;
 
+        zoomPage.gameObject.SetActive(false);
+
         controlPromptsUI.enabled = false;
     }
 
@@ -141,8 +175,15 @@ public class ImageViewer : MonoBehaviour
     {
         webSocketManager.ExecuteInMainThread(() =>
         {
-            canvas.enabled = false;
-            controlPromptsUI.enabled = true;
+            if (zoomPage.activeInHierarchy)
+            {
+                zoomPage.SetActive(false);
+            }
+            else
+            {
+                canvas.enabled = false;
+                controlPromptsUI.enabled = true;
+            }
         });
     }
 

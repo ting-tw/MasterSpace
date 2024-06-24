@@ -7,11 +7,13 @@ using UnityEngine.UI;
 public class RawImageClickHandler : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public bool isSwitch;
-    public bool switchValue = false;
     public KeyCode keyboardInput;
+
+    [HideInInspector]
+    public bool switchValue = false;
     private bool pressdown = false;
     private bool pressup = false;
-    public RawImage rawImage;
+    private RawImage rawImage;
     public bool PressDown()
     {
         if (pressdown)

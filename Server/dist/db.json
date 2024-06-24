@@ -11,13 +11,105 @@
       "imageName": "Drawing2",
       "likedBy": [],
       "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing3",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing4",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing5",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing6",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing7",
+      "likedBy": [
+        "ytleiting"
+      ],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing8",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing9",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing10",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room1",
+      "imageName": "Drawing11",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room2",
+      "imageName": "Drawing1",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room2",
+      "imageName": "Drawing2",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room2",
+      "imageName": "Drawing3",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room2",
+      "imageName": "Drawing4",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room2",
+      "imageName": "Drawing5",
+      "likedBy": [],
+      "comments": ""
+    },
+    {
+      "room": "Room2",
+      "imageName": "Drawing6",
+      "likedBy": [],
+      "comments": ""
     }
   ],
   "objects": [
     {
       "room": "Room1",
       "imageName": "mbira",
-      "likedBy": ["abc"],
+      "likedBy": [],
       "comments": ""
     }
   ]

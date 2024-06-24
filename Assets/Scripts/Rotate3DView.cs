@@ -6,7 +6,13 @@ public class Rotate3DView : MonoBehaviour
     public ImageViewer imageViewer;
     public GameObject targetPanel;
 
+    const float MouseRotationSpeed = 1000f;
+    const float rotationSpeed = 0.01f;
+
     private bool isDraggingFromPanel = false;
+    private bool isPointerDown = false;
+    private float pointerDownTime = 0f;
+    private const float clickThreshold = 0.2f; // 點擊與拖曳的時間閾值
 
     void Start()
     {
@@ -18,6 +24,13 @@ public class Rotate3DView : MonoBehaviour
         };
         entry.callback.AddListener((eventData) => { OnPointerDown((PointerEventData)eventData); });
         trigger.triggers.Add(entry);
+
+        EventTrigger.Entry upEntry = new EventTrigger.Entry
+        {
+            eventID = EventTriggerType.PointerUp
+        };
+        upEntry.callback.AddListener((eventData) => { OnPointerUp((PointerEventData)eventData); });
+        trigger.triggers.Add(upEntry);
     }
 
     void Update()
@@ -29,6 +42,12 @@ public class Rotate3DView : MonoBehaviour
             HandleTouchInput();
             HandleMouseInput();
         }
+
+        // 檢查直接點擊的情況
+        if (isPointerDown && (Time.time - pointerDownTime) > clickThreshold)
+        {
+            isDraggingFromPanel = true;
+        }
     }
 
     void OnPointerDown(PointerEventData eventData)
@@ -36,8 +55,20 @@ public class Rotate3DView : MonoBehaviour
         // 確認觸摸或滑鼠按下在Panel內
         if (RectTransformUtility.RectangleContainsScreenPoint(targetPanel.GetComponent<RectTransform>(), eventData.position, eventData.pressEventCamera))
         {
-            isDraggingFromPanel = true;
+            isPointerDown = true;
+            pointerDownTime = Time.time;
         }
+    }
+
+    void OnPointerUp(PointerEventData eventData)
+    {
+        if (isPointerDown && !isDraggingFromPanel)
+        {
+            // 處理直接點擊事件
+            HandleDirectClick();
+        }
+        isPointerDown = false;
+        isDraggingFromPanel = false;
     }
 
     void HandleTouchInput()
@@ -61,9 +92,8 @@ public class Rotate3DView : MonoBehaviour
     {
         if (Input.GetMouseButton(0)) // 當按住滑鼠左鍵時
         {
-            float rotationSpeed = 200f;
-            float rotationX = Input.GetAxis("Mouse X") * rotationSpeed;
-            float rotationY = Input.GetAxis("Mouse Y") * rotationSpeed;
+            float rotationX = Input.GetAxis("Mouse X") * MouseRotationSpeed;
+            float rotationY = Input.GetAxis("Mouse Y") * MouseRotationSpeed;
 
             RotateObject(new Vector2(rotationX, rotationY));
         }
@@ -75,7 +105,6 @@ public class Rotate3DView : MonoBehaviour
 
     void RotateObject(Vector2 deltaPosition)
     {
-        float rotationSpeed = 0.05f; // 控制旋轉速度的變量
         float rotationX = deltaPosition.y * rotationSpeed;
         float rotationY = -deltaPosition.x * rotationSpeed;
 
@@ -84,7 +113,12 @@ public class Rotate3DView : MonoBehaviour
         Vector3 rotationAxisY = imageViewer._3DViewCamera.transform.up;
 
         // 旋轉目標物體
-        imageViewer._3DViewObject.transform.Rotate(rotationAxisX, rotationX, Space.World);
-        imageViewer._3DViewObject.transform.Rotate(rotationAxisY, rotationY, Space.World);
+        imageViewer._3DViewObject.transform.RotateAround(imageViewer._3DViewObject.transform.position, rotationAxisX, rotationX);
+        imageViewer._3DViewObject.transform.RotateAround(imageViewer._3DViewObject.transform.position, rotationAxisY, rotationY);
+    }
+
+    void HandleDirectClick()
+    {
+        imageViewer.OpenZoomPage();
     }
 }

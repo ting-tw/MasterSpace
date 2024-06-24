@@ -27,7 +27,6 @@ const wss = new WebSocketServer({ server });
 
 // UDP伺服器
 udpServer.on('message', (message, rinfo) => {
-    console.log(`UDP server got: ${message} from ${rinfo.address}:${rinfo.port}`);
     // Respond to the broadcast message
     const responseMessage = Buffer.from('WebSocket server is here');
     udpServer.send(responseMessage, 0, responseMessage.length, rinfo.port, rinfo.address, (err) => {
