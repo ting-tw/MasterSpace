@@ -13,7 +13,7 @@ public class RawImageClickHandler : MonoBehaviour, IPointerDownHandler, IPointer
     public bool switchValue = false;
     private bool pressdown = false;
     private bool pressup = false;
-    private RawImage rawImage;
+    public RawImage rawImage;
     public bool PressDown()
     {
         if (pressdown)

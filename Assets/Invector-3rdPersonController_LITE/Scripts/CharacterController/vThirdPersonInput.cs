@@ -39,6 +39,11 @@ namespace Invector.vCharacterController
 
         protected virtual void Start()
         {
+            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
+            {
+                jumpBtn.rawImage.enabled = false;
+                _joystick.gameObject.SetActive(false);
+            }
 
             InitilizeController();
             InitializeTpCamera();
@@ -147,13 +152,20 @@ namespace Invector.vCharacterController
                 }
             }
 
-            // develop (
             if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
             {
-                Y = Input.GetAxis(rotateCameraYInput) * 1.4f;
-                X = Input.GetAxis(rotateCameraXInput) * 1.4f;
+                if (Input.GetKeyDown(KeyCode.LeftShift))
+                {
+                    Cursor.visible = !Cursor.visible;
+                    Cursor.lockState = Cursor.lockState == CursorLockMode.None ? CursorLockMode.Locked : CursorLockMode.None;
+                }
+
+                if (!Cursor.visible)
+                {
+                    Y = Input.GetAxis(rotateCameraYInput) * 1.4f;
+                    X = Input.GetAxis(rotateCameraXInput) * 1.4f;
+                }
             }
-            // ) develop
 
             tpCamera.RotateCamera(X, Y);
         }

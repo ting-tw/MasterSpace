@@ -197,7 +197,7 @@ wss.on('connection', (ws) => {
                 players.set(playerUUID, { room, playerData: data, username, ws });
 
                 if (!room) return;
-                const broadcastData = JSON.stringify({ type: 'playerData', data: data, uuid: playerUUID });
+                const broadcastData = JSON.stringify({ type: 'playerData', data, uuid: playerUUID, room });
 
                 wss.clients.forEach(client => {
                     if (client !== ws && client.readyState === WebSocket.OPEN && players.get(client.playerUUID)?.room == room) {

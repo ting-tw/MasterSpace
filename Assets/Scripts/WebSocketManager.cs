@@ -87,7 +87,7 @@ public class WebSocketManager : MonoBehaviour
 
         foreach (var roomBtn in roomBtns)
         {
-            roomBtn.onClick.AddListener(() => OnRoomBtnClick(roomBtn.name));
+            roomBtn.onClick.AddListener(() => LoadScene(roomBtn.name));
         }
 
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -239,11 +239,11 @@ public class WebSocketManager : MonoBehaviour
         ws.Connect();
     }
 
-    void OnRoomBtnClick(string room)
+    public void LoadScene(string room)
     {
         player.transform.position = Vector3.zero;
-        SceneManager.LoadScene(room);
         CloseMenu();
+        SceneManager.LoadScene(room);
         menuCloseBtn.gameObject.SetActive(true);
     }
 
@@ -328,6 +328,8 @@ public class WebSocketManager : MonoBehaviour
             switch (messageData.type)
             {
                 case "playerData":
+                    if (messageData.room != SceneManager.GetActiveScene().name) break;
+
                     GameObject player;
                     if (players.TryGetValue(messageData.uuid, out player) && player != null)
                     {
@@ -456,7 +458,7 @@ public class WebSocketManager : MonoBehaviour
     void OnError(object sender, ErrorEventArgs e)
     {
         statusDisplay.text = "發生錯誤 (但連線未關閉)";
-        Debug.LogError("WebSocket 錯誤: " + e); 
+        Debug.LogError("WebSocket 錯誤: " + e);
     }
 
     void ModifyDrawingImage(GameObject targetObject, Texture2D texture)
@@ -500,5 +502,6 @@ public class WebSocketManager : MonoBehaviour
         public bool isLiked;
         public int likeCount;
         public string comments;
+        public string room;
     }
 }
