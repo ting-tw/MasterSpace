@@ -6,19 +6,45 @@ const fs = require('fs');
 const express = require('express');
 const dgram = require('dgram');
 const udpServer = dgram.createSocket('udp4');
+const os = require('os');
+const path = require('path');
+const compression = require('compression');
+const serveStatic = require('serve-static');
 
 const { port } = require("./config.json");
 
-// 初始化 Express 應用
 const app = express();
 
-// 設置靜態目錄
 app.use('/images', express.static('images'));
+
+app.use(compression());
+
+const staticPath = path.join(__dirname, 'WebGL');
+app.use(serveStatic(staticPath, {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.gz')) {
+            res.setHeader('Content-Encoding', 'gzip');
+
+            // 根據文件類型設置正確的 Content-Type
+            if (path.endsWith('.wasm.gz')) {
+                res.setHeader('Content-Type', 'application/wasm');
+            } else if (path.endsWith('.js.gz')) {
+                res.setHeader('Content-Type', 'application/javascript');
+            } else if (path.endsWith('.css.gz')) {
+                res.setHeader('Content-Type', 'text/css');
+            } else if (path.endsWith('.html.gz')) {
+                res.setHeader('Content-Type', 'text/html');
+            }
+        }
+    }
+}));
 
 // 啟動 HTTP 伺服器
 const server = app.listen(port, () => {
-    console.log("WebSocket and ImageServer are running on port " + port);
-    console.log("Realtime Player Data: http://localhost:" + port + "/realtime");
+    const address = getIPAddress();
+    console.log(`WebSocket | ImageServer | WebGL are running on ${address}:${port}`);
+    console.log(`Realtime Player Data: http://${address}:${port}/realtime`);
+    console.log(`WebGL: http://${address}:${port}/`);
     console.log("(crtl + left click to open)");
 });
 
@@ -171,6 +197,19 @@ function updateLikeAndComments(room, imageName, image) {
             comments: image.comments
         }));
     });
+}
+
+
+function getIPAddress() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'NOT FOUND';
 }
 
 const players = new Map();

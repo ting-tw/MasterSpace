@@ -165,7 +165,7 @@ public class ImageViewer : MonoBehaviour
 
     void OnLikeBtnClick()
     {
-        webSocketManager.ws.Send(
+        webSocketManager.ws.SendText(
             "like:" + imageTitle.text +
                 (LikeBtn.GetComponent<Image>().color.Equals(Color.white) ? ":false" : ":true")
         );
@@ -189,7 +189,7 @@ public class ImageViewer : MonoBehaviour
 
     void OnSubmitBtnClick()
     {
-        webSocketManager.ws.Send(
+        webSocketManager.ws.SendText(
             "comment:" + imageTitle.text + ":" + commentInput.text
         );
 

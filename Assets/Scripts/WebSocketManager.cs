@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WebSocketSharp;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using UnityEngine.Networking;
@@ -17,6 +16,7 @@ using System.Text.RegularExpressions;
 using Unity.VisualScripting;
 using UnityEngine.Events;
 using Invector.vCharacterController;
+using NativeWebSocket;
 
 public class WebSocketManager : MonoBehaviour
 {
@@ -192,7 +192,7 @@ public class WebSocketManager : MonoBehaviour
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Debug.Log("上傳使用者名稱: " + usernameInput.text);
-        ws.Send("joinroom:" + scene.name + ":" + usernameInput.text);
+        ws.SendText("joinroom:" + scene.name + ":" + usernameInput.text);
     }
     void OnScanBtnClick()
     {
@@ -220,16 +220,13 @@ public class WebSocketManager : MonoBehaviour
         statusDisplay.text = "嘗試連線WebSocket";
         Debug.Log("嘗試連線WebSocket: " + webSocket_address);
 
-        if (ws != null && ws.IsAlive)
+        if (ws != null && ws.State == WebSocketState.Open)
         {
             ws.OnClose -= OnClose;
             ws.Close();
         }
 
-        ws = new WebSocket(webSocket_address)
-        {
-            WaitTime = TimeSpan.FromMilliseconds(2000)
-        };
+        ws = new WebSocket(webSocket_address);
 
         ws.OnMessage += OnMessage;
         ws.OnOpen += OnOpen;
@@ -258,6 +255,10 @@ public class WebSocketManager : MonoBehaviour
                 timer -= interval;
                 WebSocketAction();
             }
+
+#if !UNITY_WEBGL || UNITY_EDITOR
+            ws.DispatchMessageQueue();
+#endif
         }
 
         ExecuteActions();
@@ -317,12 +318,13 @@ public class WebSocketManager : MonoBehaviour
 
     void WebSocketAction()
     {
-        ws.Send("playerData:" + GameObjectSerializer.SerializeGameObject(player));
+        ws.SendText("playerData:" + GameObjectSerializer.SerializeGameObject(player));
     }
 
-    void OnMessage(object sender, MessageEventArgs e)
+    void OnMessage(byte[] bytes)
     {
-        var messageData = JsonUtility.FromJson<MessageData>(e.Data);
+        Debug.Log("hi");
+        var messageData = JsonUtility.FromJson<MessageData>(Encoding.UTF8.GetString(bytes));
         ExecuteInMainThread(() =>
         {
             switch (messageData.type)
@@ -432,18 +434,17 @@ public class WebSocketManager : MonoBehaviour
         }
     }
 
-    void OnOpen(object sender, EventArgs e)
+    void OnOpen()
     {
         statusDisplay.text = "連線成功";
         Debug.Log("WebSocket 連線成功: " + webSocket_address);
         connected = true;
     }
-
-    void OnClose(object sender, CloseEventArgs e)
+    void OnClose(WebSocketCloseCode closeCode)
     {
         statusDisplay.text = "連線已關閉";
 
-        Debug.Log("WebSocket 連線關閉: " + e.Reason);
+        Debug.Log("WebSocket 連線關閉 Code: " + closeCode);
 
         connected = false;
 
@@ -453,10 +454,10 @@ public class WebSocketManager : MonoBehaviour
         });
     }
 
-    void OnError(object sender, ErrorEventArgs e)
+    void OnError(string msg)
     {
         statusDisplay.text = "發生錯誤 (但連線未關閉)";
-        Debug.LogError("WebSocket 錯誤: " + e); 
+        Debug.LogError("WebSocket 錯誤: " + msg);
     }
 
     void ModifyDrawingImage(GameObject targetObject, Texture2D texture)
