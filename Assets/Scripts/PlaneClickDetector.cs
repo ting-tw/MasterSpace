@@ -110,6 +110,10 @@ public class PlaneClickDetector : MonoBehaviour
         if (menuUI.enabled) return;
 
         imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments, isPortrait);
+        
+        imageViewer.canvas.enabled = true;
+        imageViewer.zoomPage.gameObject.SetActive(false);
+        imageViewer.controlPromptsUI.enabled = false;
     }
 
     public void UpdateImage(bool isLiked, int likeCount, string comments)
@@ -117,7 +121,7 @@ public class PlaneClickDetector : MonoBehaviour
         this.isLiked = isLiked;
         this.likeCount = likeCount;
         this.comments = comments;
-        if (imageViewer.imageTitle.text == gameObject.name)
+        if (imageViewer.imageTitle.text == gameObject.name && imageViewer.enabled)
         {
             imageViewer.UpdateImageViewer(gameObject.name, isLiked, likeCount, comments);
         }

@@ -35,16 +35,8 @@ namespace Invector.vCharacterController
 
         public float rotationSpeed; // 旋轉速度
 
-
-
         protected virtual void Start()
         {
-            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
-            {
-                jumpBtn.rawImage.enabled = false;
-                _joystick.gameObject.SetActive(false);
-            }
-
             InitilizeController();
             InitializeTpCamera();
         }
@@ -152,19 +144,18 @@ namespace Invector.vCharacterController
                 }
             }
 
-            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
-            {
+#if platform == WindowsPlayer || platform == UNITY_EDITOR
                 if (Input.GetKeyDown(KeyCode.LeftShift))
                 {
                     Cursor.visible = !Cursor.visible;
                     Cursor.lockState = Cursor.lockState == CursorLockMode.None ? CursorLockMode.Locked : CursorLockMode.None;
                 }
 
-                if (!Cursor.visible)
+                if (!Cursor.visible || Input.GetKey(KeyCode.Mouse0))
                 {
                     Y = Input.GetAxis(rotateCameraYInput) * 1.4f;
                     X = Input.GetAxis(rotateCameraXInput) * 1.4f;
-                }
+#endif
             }
 
             tpCamera.RotateCamera(X, Y);

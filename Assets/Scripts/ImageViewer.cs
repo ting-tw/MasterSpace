@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ImageViewer : MonoBehaviour
+public class ImageViewer : MonoBehaviour, IPointerClickHandler, IDragHandler
 {
     [Header("WebSocket")]
     public WebSocketManager webSocketManager;
@@ -30,12 +30,14 @@ public class ImageViewer : MonoBehaviour
     public RawImage zoom3DViewRawImage;
 
 
+    private bool isDragging = false;
+
     void Start()
     {
         canvas = gameObject.GetComponent<Canvas>();
         LikeBtn.onClick.AddListener(OnLikeBtnClick);
 
-        closeBtn.onClick.AddListener(OnCloseBtnClick);
+        closeBtn.onClick.AddListener(Close);
         submitBtn.onClick.AddListener(OnSubmitBtnClick);
 
         DontDestroyOnLoad(gameObject);
@@ -46,6 +48,24 @@ public class ImageViewer : MonoBehaviour
             DontDestroyOnLoad(obj);
         }
     }
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (!isDragging)
+        {
+            if (RectTransformUtility.RectangleContainsScreenPoint(image.rectTransform, eventData.position, eventData.pressEventCamera))
+            {
+                OpenZoomPage();
+            }
+        }
+        isDragging = false;
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        isDragging = true;
+    }
+
+
     public void OpenZoomPage()
     {
         zoomPage.gameObject.SetActive(true);
@@ -121,20 +141,8 @@ public class ImageViewer : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(comments.GetComponent<RectTransform>());
         }
 
-        UpdateImageViewer();
-    }
-
-    public void UpdateImageViewer()
-    {
         Canvas.ForceUpdateCanvases();
-
-        canvas.enabled = true;
-
-        zoomPage.gameObject.SetActive(false);
-
-        controlPromptsUI.enabled = false;
     }
-
     public void UpdateImageViewer(GameObject newObject, string newTitle, bool isLiked, int newLikeCount, string newComments)
     {
         _3DViewObject = newObject;
@@ -171,20 +179,23 @@ public class ImageViewer : MonoBehaviour
         );
     }
 
-    void OnCloseBtnClick()
+    public void Close()
     {
-        webSocketManager.ExecuteInMainThread(() =>
+        if (zoomPage.activeInHierarchy)
         {
-            if (zoomPage.activeInHierarchy)
-            {
-                zoomPage.SetActive(false);
-            }
-            else
-            {
-                canvas.enabled = false;
-                controlPromptsUI.enabled = true;
-            }
-        });
+            zoomPage.SetActive(false);
+        }
+        else
+        {
+            canvas.enabled = false;
+            controlPromptsUI.enabled = true;
+        }
+    }
+    public void CloseAll()
+    {
+        zoomPage.SetActive(false);  
+        canvas.enabled = false;
+        controlPromptsUI.enabled = true;
     }
 
     void OnSubmitBtnClick()
