@@ -3733,6 +3733,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   imageViewer: {fileID: 1635592723}
   targetPanel: {fileID: 509703420}
+  isDraggingFromPanel: 0
+  isPointerDown: 0
+  pointerDownPosition: {x: 0, y: 0}
 --- !u!1 &533040568
 GameObject:
   m_ObjectHideFlags: 0
@@ -6751,7 +6754,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c535a6d9070054048843159fb6deb5a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseScrollSpped: 1.1
+  mouseScrollSpeed: 0.1
 --- !u!1 &1073762183
 GameObject:
   m_ObjectHideFlags: 0
@@ -10108,6 +10111,7 @@ GameObject:
   - component: {fileID: 1730755761}
   - component: {fileID: 1730755760}
   - component: {fileID: 1730755759}
+  - component: {fileID: 1730755762}
   m_Layer: 5
   m_Name: Perspective
   m_TagString: Untagged
@@ -10185,6 +10189,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1730755757}
   m_CullTransparentMesh: 1
+--- !u!114 &1730755762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730755757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54802adebdeeaa649835fca926647c45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  perspectiveBtn: {fileID: 1730755759}
+  strafeBtn: {fileID: 379900864}
+  controller: {fileID: 1704771715}
 --- !u!1 &1749542826
 GameObject:
   m_ObjectHideFlags: 0
@@ -11402,6 +11421,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   imageViewer: {fileID: 1635592723}
   targetPanel: {fileID: 1958458086}
+  isDraggingFromPanel: 0
+  isPointerDown: 0
+  pointerDownPosition: {x: 0, y: 0}
 --- !u!222 &1958458089
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -11441,7 +11463,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c535a6d9070054048843159fb6deb5a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseScrollSpped: 1.1
+  mouseScrollSpeed: 0.1
 --- !u!1 &1961158389
 GameObject:
   m_ObjectHideFlags: 0
