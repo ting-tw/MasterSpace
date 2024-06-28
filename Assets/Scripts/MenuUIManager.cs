@@ -35,11 +35,10 @@ public class MenuUIManager : MonoBehaviour
 
     void Start()
     {
-        if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
-        {
-            TouchToggle();
-        }
 
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR
+        TouchToggle();
+#endif
         connectBtn.onClick.AddListener(webSocketManager.Connect);
         scanBtn.onClick.AddListener(webSocketManager.OnScanBtnClick);
 

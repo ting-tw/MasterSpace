@@ -10,6 +10,7 @@ public class _3DObjectClickDetector : MonoBehaviour
     private const float dragThreshold = 10.0f; // Minimum distance for a drag (in pixels)
     private Vector2 pointerDownPosition;
 
+    public Canvas menuUI;
     ImageViewer imageViewer;
     public bool isLiked = false;
     public int likeCount = 0;
@@ -18,6 +19,7 @@ public class _3DObjectClickDetector : MonoBehaviour
     void Start()
     {
         imageViewer = GameObject.Find("ImageViewer").GetComponent<ImageViewer>();
+        menuUI = GameObject.Find("Menu UI").GetComponent<Canvas>();
     }
 
     void Update()
@@ -105,7 +107,7 @@ public class _3DObjectClickDetector : MonoBehaviour
         this.isLiked = isLiked;
         this.likeCount = likeCount;
         this.comments = comments;
-        
+
         if (imageViewer.imageTitle.text == gameObject.name)
         {
             imageViewer.UpdateImageViewer(gameObject.name, isLiked, likeCount, comments);
@@ -114,12 +116,14 @@ public class _3DObjectClickDetector : MonoBehaviour
 
     void OnObjectClicked()
     {
-        Debug.Log("clicked");
+        if (imageViewer.canvas.enabled) return;
+        if (menuUI.enabled) return;
         foreach (GameObject obj in imageViewer._3DViewObjects)
         {
             if (obj.name == "3DView " + gameObject.name)
             {
                 imageViewer.UpdateImageViewer(obj, gameObject.name, isLiked, likeCount, comments);
+                imageViewer.Open();
             }
         }
     }

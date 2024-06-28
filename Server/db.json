@@ -51,7 +51,8 @@
       "room": "Room1",
       "imageName": "Drawing8",
       "likedBy": [
-        "tester111"
+        "tester111",
+        "abc"
       ],
       "comments": ""
     },

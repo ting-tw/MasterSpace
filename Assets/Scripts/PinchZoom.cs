@@ -2,10 +2,11 @@ using UnityEngine;
 
 public class PinchZoom : MonoBehaviour
 {
-    public float mouseScrollSpped = 0.1f;
+    public float mouseScrollSpeed = 0.1f;
     private Vector2 initialTouchPosition1;
     private Vector2 initialTouchPosition2;
     private float initialDistance;
+
     void Update()
     {
         if (Input.touchCount == 2)
@@ -27,16 +28,17 @@ public class PinchZoom : MonoBehaviour
 
                 float scaleFactor = currentDistance / initialDistance;
                 transform.localScale *= scaleFactor;
+
+                // 重置 initialDistance 以便下一次縮放計算
+                initialDistance = currentDistance;
             }
         }
-
-
 
         // 檢測滾輪縮放
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0.0f)
         {
-            transform.localScale *= 1 + scroll * mouseScrollSpped;
+            transform.localScale *= 1 + scroll * mouseScrollSpeed;
         }
     }
 }

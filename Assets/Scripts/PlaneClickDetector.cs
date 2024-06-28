@@ -110,10 +110,7 @@ public class PlaneClickDetector : MonoBehaviour
         if (menuUI.enabled) return;
 
         imageViewer.UpdateImageViewer(texture2D, gameObject.name, isLiked, likeCount, comments, isPortrait);
-        
-        imageViewer.canvas.enabled = true;
-        imageViewer.zoomPage.gameObject.SetActive(false);
-        imageViewer.controlPromptsUI.enabled = false;
+        imageViewer.Open();
     }
 
     public void UpdateImage(bool isLiked, int likeCount, string comments)

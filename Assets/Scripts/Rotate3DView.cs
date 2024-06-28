@@ -6,17 +6,15 @@ public class Rotate3DView : MonoBehaviour
     public ImageViewer imageViewer;
     public GameObject targetPanel;
 
-    const float MouseRotationSpeed = 1000f;
-    const float rotationSpeed = 0.01f;
+    const float MouseRotationSpeed = 10f;
+    const float TouchRotationSpeed = 0.3f;
 
-    private bool isDraggingFromPanel = false;
-    private bool isPointerDown = false;
-    private float pointerDownTime = 0f;
-    private const float clickThreshold = 0.2f; // 點擊與拖曳的時間閾值
+    public bool isDraggingFromPanel = false;
+    public bool isPointerDown = false;
+    public Vector2 pointerDownPosition;
 
     void Start()
     {
-        // 為Panel添加EventTrigger並設置PointerDown事件
         EventTrigger trigger = targetPanel.AddComponent<EventTrigger>();
         EventTrigger.Entry entry = new EventTrigger.Entry
         {
@@ -37,16 +35,13 @@ public class Rotate3DView : MonoBehaviour
     {
         if (imageViewer._3DViewObject == null) return;
 
-        if (isDraggingFromPanel)
+        if (isPointerDown)
         {
-            HandleTouchInput();
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR
             HandleMouseInput();
-        }
-
-        // 檢查直接點擊的情況
-        if (isPointerDown && (Time.time - pointerDownTime) > clickThreshold)
-        {
-            isDraggingFromPanel = true;
+#else
+            HandleTouchInput();
+#endif
         }
     }
 
@@ -56,17 +51,16 @@ public class Rotate3DView : MonoBehaviour
         if (RectTransformUtility.RectangleContainsScreenPoint(targetPanel.GetComponent<RectTransform>(), eventData.position, eventData.pressEventCamera))
         {
             isPointerDown = true;
-            pointerDownTime = Time.time;
+            pointerDownPosition = eventData.position;
         }
     }
 
     void OnPointerUp(PointerEventData eventData)
     {
-        if (isPointerDown && !isDraggingFromPanel)
-        {
-            // 處理直接點擊事件
-            HandleDirectClick();
+        if (pointerDownPosition == eventData.position) {
+            imageViewer.OpenZoomPage();
         }
+
         isPointerDown = false;
         isDraggingFromPanel = false;
     }
@@ -78,8 +72,9 @@ public class Rotate3DView : MonoBehaviour
             Touch touch = Input.GetTouch(0);
             if (touch.phase == TouchPhase.Moved)
             {
-                Vector2 deltaPosition = touch.deltaPosition;
+                Vector2 deltaPosition = touch.deltaPosition * TouchRotationSpeed;
                 RotateObject(deltaPosition);
+                isDraggingFromPanel = true;
             }
             else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
             {
@@ -90,23 +85,20 @@ public class Rotate3DView : MonoBehaviour
 
     void HandleMouseInput()
     {
-        if (Input.GetMouseButton(0)) // 當按住滑鼠左鍵時
+        if (Input.GetKey(KeyCode.Mouse0))
         {
             float rotationX = Input.GetAxis("Mouse X") * MouseRotationSpeed;
             float rotationY = Input.GetAxis("Mouse Y") * MouseRotationSpeed;
 
             RotateObject(new Vector2(rotationX, rotationY));
-        }
-        else if (Input.GetMouseButtonUp(0))
-        {
-            isDraggingFromPanel = false;
+            isDraggingFromPanel = true;
         }
     }
 
     void RotateObject(Vector2 deltaPosition)
     {
-        float rotationX = deltaPosition.y * rotationSpeed;
-        float rotationY = -deltaPosition.x * rotationSpeed;
+        float rotationX = deltaPosition.y;
+        float rotationY = -deltaPosition.x;
 
         // 根據攝影機的位置計算旋轉軸
         Vector3 rotationAxisX = imageViewer._3DViewCamera.transform.right;
@@ -117,8 +109,8 @@ public class Rotate3DView : MonoBehaviour
         imageViewer._3DViewObject.transform.RotateAround(imageViewer._3DViewObject.transform.position, rotationAxisY, rotationY);
     }
 
-    void HandleDirectClick()
-    {
-        imageViewer.OpenZoomPage();
-    }
+    // void HandleDirectClick()
+    // {
+    //     imageViewer.OpenZoomPage();
+    // }
 }

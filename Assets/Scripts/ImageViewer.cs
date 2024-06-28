@@ -52,7 +52,8 @@ public class ImageViewer : MonoBehaviour, IPointerClickHandler, IDragHandler
     {
         if (!isDragging)
         {
-            if (RectTransformUtility.RectangleContainsScreenPoint(image.rectTransform, eventData.position, eventData.pressEventCamera))
+            if (RectTransformUtility.RectangleContainsScreenPoint(image.rectTransform, eventData.position, eventData.pressEventCamera) ||
+             RectTransformUtility.RectangleContainsScreenPoint(_3DViewRawImage.rectTransform, eventData.position, eventData.pressEventCamera))
             {
                 OpenZoomPage();
             }
@@ -171,6 +172,14 @@ public class ImageViewer : MonoBehaviour, IPointerClickHandler, IDragHandler
         commentInput.text = "";
     }
 
+    public void Open()
+    {
+        Canvas.ForceUpdateCanvases();
+        canvas.enabled = true;
+        zoomPage.gameObject.SetActive(false);
+        controlPromptsUI.enabled = false;
+    }
+
     void OnLikeBtnClick()
     {
         webSocketManager.ws.Send(
@@ -193,7 +202,7 @@ public class ImageViewer : MonoBehaviour, IPointerClickHandler, IDragHandler
     }
     public void CloseAll()
     {
-        zoomPage.SetActive(false);  
+        zoomPage.SetActive(false);
         canvas.enabled = false;
         controlPromptsUI.enabled = true;
     }
