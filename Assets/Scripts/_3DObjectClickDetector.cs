@@ -1,5 +1,7 @@
 
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class _3DObjectClickDetector : MonoBehaviour
 {
@@ -82,6 +84,7 @@ public class _3DObjectClickDetector : MonoBehaviour
                 {
                     if (hit.transform == transform)
                     {
+                        if (IsPointerOverUIObject(screenPosition)) return;
                         OnObjectClicked();
                     }
                 }
@@ -90,6 +93,14 @@ public class _3DObjectClickDetector : MonoBehaviour
         isPointerDown = false;
     }
 
+    private bool IsPointerOverUIObject(Vector2 v2)
+    {
+        PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
+        eventDataCurrentPosition.position = v2;
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+        return results.Count > 0;
+    }
     void OnPointerMove(Vector2 currentPosition)
     {
         if (isPointerDown)

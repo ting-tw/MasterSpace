@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -84,6 +85,7 @@ public class PlaneClickDetector : MonoBehaviour
                 {
                     if (hit.transform == transform)
                     {
+                        if (IsPointerOverUIObject(screenPoint)) return;
                         OnPlaneClicked();
                     }
                 }
@@ -103,6 +105,15 @@ public class PlaneClickDetector : MonoBehaviour
             }
         }
     }
+    private bool IsPointerOverUIObject(Vector2 v2)
+    {
+        PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
+        eventDataCurrentPosition.position = v2;
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+        return results.Count > 0;
+    }
+
 
     void OnPlaneClicked()
     {
