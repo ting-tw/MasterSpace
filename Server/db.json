@@ -15,7 +15,9 @@
     {
       "room": "Room1",
       "imageName": "Drawing3",
-      "likedBy": [],
+      "likedBy": [
+        "tester111"
+      ],
       "comments": ""
     },
     {
@@ -33,28 +35,22 @@
     {
       "room": "Room1",
       "imageName": "Drawing6",
-      "likedBy": [
-        "tester111"
-      ],
+      "likedBy": [],
       "comments": ""
     },
     {
       "room": "Room1",
       "imageName": "Drawing7",
       "likedBy": [
-        "ytleiting",
-        "tester111"
+        "ytleiting"
       ],
-      "comments": "tester111: 留言\n雷霆LeiTing: 123\n"
+      "comments": ""
     },
     {
       "room": "Room1",
       "imageName": "Drawing8",
-      "likedBy": [
-        "tester111",
-        "abc"
-      ],
-      "comments": ""
+      "likedBy": [],
+      "comments": "tester111: 12331232\n"
     },
     {
       "room": "Room1",
@@ -77,9 +73,7 @@
     {
       "room": "Room2",
       "imageName": "Drawing1",
-      "likedBy": [
-        "tester111"
-      ],
+      "likedBy": [],
       "comments": ""
     },
     {
@@ -118,10 +112,9 @@
       "room": "Room1",
       "imageName": "mbira",
       "likedBy": [
-        "tester111",
-        "ytleiting"
+        "tester111"
       ],
-      "comments": "tester111: 留言板\n"
+      "comments": "tester111: ABC\n"
     }
   ]
 }
