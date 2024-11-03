@@ -19,6 +19,7 @@ app.use('/images', express.static('images'));
 const server = app.listen(port, () => {
     console.log("WebSocket and ImageServer are running on port " + port);
     console.log("Realtime Player Data: http://localhost:" + port + "/realtime");
+    console.log("Image change: http://localhost:" + port + "/images-view");
     console.log("(crtl + left click to open)");
 });
 
@@ -365,4 +366,97 @@ process.on('uncaughtException', (err) => {
     console.log('按 Enter 鍵退出...');
     process.stdin.resume();
     process.stdin.on('data', process.exit.bind(process, 1));
+});
+
+const multer = require('multer');
+const path = require('path');
+
+// 設置圖片上傳的目錄和檔案命名方式
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const room = req.params.room;
+        const dirPath = path.join(__dirname, 'images', room);
+        fs.mkdirSync(dirPath, { recursive: true });
+        cb(null, dirPath);
+    },
+    filename: (req, file, cb) => {
+        // Use the imageName from the URL parameters to overwrite the original image
+        const imageName = req.params.imageName;
+        cb(null, imageName); // Save with the original image's name to replace it
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// 新增圖片上傳路由
+app.post('/upload/:room/:imageName', upload.single('image'), (req, res) => {
+    res.redirect('/images-view');
+});
+
+
+app.get('/images-view', (req, res) => {
+    const room1Path = './images/Room1';
+    const room2Path = './images/Room2';
+
+    const getImages = (dirPath) => {
+        return fs.existsSync(dirPath)
+            ? fs.readdirSync(dirPath).filter(file => file.endsWith('.jpg'))
+            : [];
+    };
+
+    const room1Images = getImages(room1Path);
+    const room2Images = getImages(room2Path);
+
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Image Viewer</title>
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+            <style>
+                .container { margin-top: 20px; }
+                .image-card img { max-width: 100%; height: auto; }
+                .card { margin-bottom: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2 class="mb-4">Room1 Images</h2>
+                <div class="row">
+                    ${room1Images.map(img => `
+                        <div class="col-md-3">
+                            <div class="card image-card">
+                                <img src="/images/Room1/${img}" class="card-img-top" alt="${img}">
+                                <div class="card-body text-center">
+                                    <form action="/upload/Room1/${img}" method="POST" enctype="multipart/form-data">
+                                        <input type="file" name="image" accept="image/*" class="form-control mb-2" required>
+                                        <button type="submit" class="btn btn-primary btn-block">Upload</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <h2 class="mb-4">Room2 Images</h2>
+                <div class="row">
+                    ${room2Images.map(img => `
+                        <div class="col-md-3">
+                            <div class="card image-card">
+                                <img src="/images/Room2/${img}" class="card-img-top" alt="${img}">
+                                <div class="card-body text-center">
+                                    <form action="/upload/Room2/${img}" method="POST" enctype="multipart/form-data">
+                                        <input type="file" name="image" accept="image/*" class="form-control mb-2" required>
+                                        <button type="submit" class="btn btn-primary btn-block">Upload</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+        </body>
+        </html>
+    `);
 });
