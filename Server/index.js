@@ -375,14 +375,18 @@ const path = require('path');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const room = req.params.room;
-        const dirPath = path.join(__dirname, 'images', room);
+
+        // 使用 process.execPath 獲取可執行文件的目錄
+        const baseDir = path.join(path.dirname(process.execPath), 'images');
+        const dirPath = path.join(baseDir, room);
+
         fs.mkdirSync(dirPath, { recursive: true });
         cb(null, dirPath);
     },
     filename: (req, file, cb) => {
-        // Use the imageName from the URL parameters to overwrite the original image
+        // 使用 imageName 參數來命名檔案，覆蓋原來的圖片
         const imageName = req.params.imageName;
-        cb(null, imageName); // Save with the original image's name to replace it
+        cb(null, imageName); // 用原圖名稱保存以覆蓋
     }
 });
 
