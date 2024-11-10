@@ -387,6 +387,18 @@ const storage = multer.diskStorage({
         // 使用 imageName 參數來命名檔案，覆蓋原來的圖片
         const imageName = req.params.imageName;
         cb(null, imageName); // 用原圖名稱保存以覆蓋
+
+        const room = req.params.room;
+
+        const imagePath = `images/${room}/${imageName}`;
+        players.forEach(player => {
+            if (player.room != room) return;
+            player.ws.send(JSON.stringify({
+                type: "image_reload",
+                imagePath,
+                imageName: imageName.split(".")[0]
+            }));
+        });
     }
 });
 

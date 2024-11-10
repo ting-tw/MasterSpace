@@ -259,6 +259,7 @@ public class WebSocketManager : MonoBehaviour
                     break;
 
                 case "image":
+                case "image_reload":
                     Debug.Log("開始從ImageServer獲取圖片: " + messageData.imageName);
 
                     GameObject targetObject = GameObject.Find(messageData.imageName);
@@ -268,7 +269,9 @@ public class WebSocketManager : MonoBehaviour
                         return;
                     }
 
-                    targetObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+                    if (messageData.type == "image")
+                        targetObject.GetComponent<PlaneClickDetector>().UpdateImage(messageData.isLiked, messageData.likeCount, messageData.comments);
+
                     imageServer_address = menuUIManager.GetImageServerURL();
 
                     if (imageServer_address == "")
